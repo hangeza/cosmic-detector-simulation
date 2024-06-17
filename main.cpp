@@ -23,7 +23,7 @@
 #include "utilities.h"
 
 constexpr int g_verbosity { 3 };
-constexpr double muon_flux_literature_value { 80. };
+constexpr double muon_flux_literature_value { 50. };
 
 auto main() -> int
 {
@@ -46,6 +46,10 @@ auto main() -> int
     constexpr std::size_t nr_bins { static_cast<int>(theta_max / theta_step) + 1 };
     std::cout << "nr of bins: " << nr_bins << "\n";
 
+    // define the coincidence level, i.e. the number of detectors in a setup which have to provide a signal for one event
+    // -1 for auto, i.e. coinc level is set to the number of detectors
+    constexpr int min_coincidence_count { -1 };
+    
     // vector of 2d polygon vertices defining the shape (in x-y-plane) of the detector.
     // note, that the points have to be in geometrical sequential order in
     // counter-clockwise orientation (i.e. a sequence of points defining the detector outline
@@ -108,36 +112,106 @@ auto main() -> int
         { -500., 50. },
     };
 
-    const std::vector<Point> ref_volume_points {
-        { -500., -500. },
-        { 500., -500. },
-        { 500., 500. },
-        { -500., 500. },
-    };
-
     // create 3d objects of type ExtrudedObject defined by the 2d outline,
     // a global position offset and a thickness
-    ExtrudedObject ref_volume { ref_volume_points, { 0., 0., -200. }, 400. };
-    //ref_volume.set_position( R3::Origin );
-    ExtrudedObject detector1 { large_paddle_points_lower, { 0., 0., -100. }, 7. };
-    ExtrudedObject detector2 { large_paddle_points_upper, { 0., 0., 100. }, 7. };
+    ExtrudedObject detector1 { large_bar_points, { 0., 0., -100. }, 100. };
+    ExtrudedObject detector2 { large_bar_points, { 0., 0., 100. }, 100. };
 
     // create 3d objects of type ExtrudedObject but using the constructor for generation of a
     // circular shape specified by a global position offset, radius, thickness and an optional
     // number of vertex points to generate the circle
     ExtrudedObject round_detector1 { { 0., 0., 0. }, 50., 10. };
     ExtrudedObject round_detector2 { { 0., 0., 100. }, 50., 10. };
+    
+    ExtrudedObject fiber { { 0., 0., -250. }, 0.5, 500., 16 };
+    fiber.add_rotation( R3::Base::Y, toRad(90.) );
+    ExtrudedObject trigger_detector { 
+        {
+            { -260., -50. },
+            { 260., -50. },
+            { 260., 50. },
+            { -260., 50. },
+        }, 
+        { 0., 0., -1. }, 1. };
 
-    // construct a detector setup with two detectors
-    DetectorSetup setup { { /*ref_volume,*/ detector1, detector2 } };
-
-    // simulate the effective area (geometric aperture) at theta=0 of the detector system
-    // this quantity may be used later to infer the expected detector count rate
-    [[maybe_unused]] const double effective_area_sqm { simulate_geometric_aperture(setup, gen, nr_events) };
-
+        
+     DetectorSetup setup { {detector1, detector2} };
+     
+    // construct a detector setup with several detectors which are individually aligned
+/*
+    DetectorSetup setup { { } };
+    //setup.add_detector(trigger_detector);
+    for (std::size_t i = 0; i < 1; ++i) {
+        ExtrudedObject det_l1x { { 0., -8.+static_cast<double>(i)*1.+0.1, -250. }, 0.5, 500., 16 };
+        ExtrudedObject det_l1y { { -1., -8.5+static_cast<double>(i)*1.+0.1, -250. }, 0.5, 500., 16 };
+        ExtrudedObject det_l2x { { -3., -8.+static_cast<double>(i)*1.+0.1, -250. }, 0.5, 500., 16 };
+        ExtrudedObject det_l2y { { -4., -8.5+static_cast<double>(i)*1.+0.1, -250. }, 0.5, 500., 16 };
+        det_l1x.add_rotation( R3::Base::Y, toRad(90.) );
+        det_l1y.add_rotation( R3::Base::Y, toRad(90.) );
+        det_l1y.add_rotation( R3::Base::Z, toRad(90.) );
+        det_l2x.add_rotation( R3::Base::Y, toRad(90.) );
+        det_l2y.add_rotation( R3::Base::Y, toRad(90.) );
+        det_l2y.add_rotation( R3::Base::Z, toRad(90.) );
+        setup.add_detector(det_l1x);
+        setup.add_detector(det_l1y);
+        setup.add_detector(det_l2x);
+        setup.add_detector(det_l2y);
+    }
+    //setup.add_detector(trigger_detector);
+*/    
     // add a rotation to the system
     setup.rotate(detector_rotation_axis, detector_rotation_angle);
 
+    for ( const auto& detector : setup.detectors() ) {
+        auto bounds { detector.bounding_box() };
+        Point dimensions { bounds.second - bounds.first };
+        std::cout << "** Detector **" << std::endl; 
+        std::cout << "detector bounds: min=" << bounds.first << " max=" << bounds.second <<    "\n";
+        std::cout << "detector dimensions=" << dimensions << "\n";
+    }
+    
+    // simulate the effective area (geometric aperture) at theta=0 of the detector system
+    // this quantity may be used later to infer the expected detector count rate
+    [[maybe_unused]] const double effective_area_sqm { simulate_geometric_aperture(setup, gen, nr_events) };
+    //return 0;
+
+    /*
+    constexpr double rotstep { toRad(1.) };
+    
+    auto points = setup.ref_detector()->get_vertices();
+    std::cout << "rot=0" << std::endl;
+    for ( auto point : points ) {
+        std::cout << " " << point << std::endl;
+    }
+    auto bounds { setup.ref_detector()->bounding_box() };
+    Point dimensions { bounds.second - bounds.first };
+    std::cout << "detector bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
+    std::cout << "detector dimensions=" << dimensions << "\n";
+
+    setup.rotate(detector_rotation_axis, toRad(-45.));
+    points = setup.ref_detector()->get_vertices();
+    std::cout << "rot=-90" << std::endl;
+    for ( auto point : points ) {
+        std::cout << " " << point << std::endl;
+    }
+    bounds = setup.ref_detector()->bounding_box();
+    dimensions = bounds.second - bounds.first;
+    std::cout << "detector bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
+    std::cout << "detector dimensions=" << dimensions << "\n";
+    
+    
+    //return 0;
+    
+    for (double rot_angle = toRad(-90.); rot_angle < toRad(90.); rot_angle += rotstep) {
+        auto points = setup.ref_detector()->get_vertices();
+        std::cout << "rot=" << toDeg(rot_angle) << "deg:" << std::endl;
+        for ( auto point : points ) {
+            std::cout << " " << point << std::endl;
+        }
+        setup.rotate(detector_rotation_axis, rotstep);
+    }
+    */
+    
     // uncomment the following block to calculate the double differential acceptance
     // as function of phi and theta
     /*
@@ -149,15 +223,15 @@ auto main() -> int
 
     // run a scan over theta angle (uniformly distributed)
     // to record the detector acceptance, if required
-    theta_scan(setup, gen, nr_events, 0., theta_max, nr_bins, &histos);
+//    theta_scan(setup, gen, nr_events, 0., theta_max, nr_bins, &histos);
 
     // now, run the full simulation and append the resulting histograms
     // to the already existing histogram vector
-    cosmic_simulation(setup, gen, nr_events, &histos, nr_bins, theta_max);
+    cosmic_simulation(setup, gen, nr_events, &histos, nr_bins, theta_max, min_coincidence_count);
 
     // run a sweep over angular range of detector orientation
     // return a list of acceptance vs angle including statistical errors
-    auto acceptance_dataseries { cosmic_simulation_detector_sweep(setup, gen, nr_events, detector_rotation_axis, toRad(-90.), toRad(90.), 181) };
+    auto acceptance_dataseries { cosmic_simulation_detector_sweep(setup, gen, nr_events, detector_rotation_axis, toRad(-90.), toRad(90.), 181, min_coincidence_count) };
 
     // define a second list which shall hold count rate values calculated from acceptance
     MeasurementVector<double, double> countrate_vs_angle_dataseries {};

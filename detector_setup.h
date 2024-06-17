@@ -14,16 +14,26 @@
 */
 class DetectorSetup {
 public:
-    DetectorSetup() = delete;
+    struct TriggerClass {
+        unsigned number { 1u };
+        bool invert { false };
+        std::function< bool(bool, bool) > logic_function { std::logical_or<bool>{} };
+    };
+    DetectorSetup() = default;
     DetectorSetup(const DetectorSetup& other);
     DetectorSetup(DetectorSetup&& other);
     DetectorSetup(const std::vector<ExtrudedObject>& detectorlist);
 
     auto detectors() -> std::vector<ExtrudedObject>& { return m_detectors; }
     auto detectors() const -> const std::vector<ExtrudedObject>& { return m_detectors; }
-    std::vector<ExtrudedObject>::iterator& ref_detector() { return m_ref_detector; }
-    const std::vector<ExtrudedObject>::iterator& ref_detector() const { return m_ref_detector; }
+    void add_detector(const ExtrudedObject& det);
+    ExtrudedObject& ref_detector() { return *m_detectors.begin(); }
+    const ExtrudedObject& ref_detector() const { return *m_detectors.cbegin(); }
     void rotate(const Vector& rot_axis, double rot_angle);
+    void reset_rotation();
+
+    auto intersection(const Line& path) const -> std::vector<LineSegment>;
+
 
 private:
     std::vector<ExtrudedObject> m_detectors {};

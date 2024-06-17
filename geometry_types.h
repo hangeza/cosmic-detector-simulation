@@ -88,7 +88,9 @@ struct Plane {
  */
 class ExtrudedObject {
 public:
-    ExtrudedObject() = default;
+    ExtrudedObject() = delete;
+    ExtrudedObject(const ExtrudedObject& other);
+    ExtrudedObject(ExtrudedObject&& other);
     ExtrudedObject(const std::vector<Point>& vertices, const Point& position, double thickness);
     ExtrudedObject(const Point& position, double radius, double thickness, std::size_t nr_vertices = 32);
     const auto position() const -> Point;
@@ -96,14 +98,15 @@ public:
     auto thickness() const -> double;
     auto contains(const Point& point) const -> bool;
     auto intersection(const Line& path) const -> LineSegment;
+    auto get_vertices() const -> std::vector<Point>;
     auto bounding_box() const -> std::pair<Point, Point>;
     void add_rotation(const Vector& rot_axis, double rot_angle);
     auto get_rotation_matrix() -> const matrix2d<double>&;
     void reset_rotation_matrix();
 
-private:
+protected:
     std::vector<Point> m_vertices {}; //<! the vector of 2d vertices defining the object's outline
-    Point m_position { 0., 0., 0. }; //<! the global position and reference point of the object
+    Point m_position { R3::Origin }; //<! the global position and reference point of the object
     double m_thickness { 0. }; //<! the thickness (extrusion) of the object
     std::vector<Plane> m_planes {}; //<! a vector of all surface planes of the object
     matrix2d<double> m_rotation_matrix { R3::Identity }; //<! the 3x3 rotation matrix

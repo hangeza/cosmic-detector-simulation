@@ -33,16 +33,16 @@ public:
     };
 
     template <typename F>
-    SampledDistribution(F&& cdfFunc, const T low, const T high, const unsigned resolution = 1024)
+    SampledDistribution(F&& cdfFunc, const T low, const T high, const std::vector<T>& params , const unsigned resolution = 4096)
     {
         if (low >= high)
             throw InvalidBounds("");
         SampledCDF.reserve(resolution);
-        const T cdfLow = cdfFunc(low);
-        const T cdfHigh = cdfFunc(high);
+        const T cdfLow = cdfFunc(low, params);
+        const T cdfHigh = cdfFunc(high, params);
         for (unsigned i = 0; i < resolution; ++i) {
             const T x = (high - low) * i / (resolution - 1) + low;
-            const T p = (cdfFunc(x) - cdfLow) / (cdfHigh - cdfLow); // normalising
+            const T p = (cdfFunc(x, params) - cdfLow) / (cdfHigh - cdfLow); // normalising
             //if (p < SampledCDF.back()) throw CDFNotMonotonic("");
             SampledCDF.emplace_back(p, x);
         }

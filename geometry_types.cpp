@@ -77,6 +77,30 @@ void Plane::rotate(const matrix2d<double>& rot_matrix)
     *this = new_plane;
 }
 
+ExtrudedObject::ExtrudedObject(const ExtrudedObject& other)
+    : m_vertices(other.m_vertices)
+    , m_position(other.m_position)
+    , m_thickness(other.m_thickness)
+    , m_planes(other.m_planes)
+    , m_rotation_matrix(other.m_rotation_matrix)
+{
+//    std::cout<<"ExtrudedObject::ExtrudedObject(const ExtrudedObject&) 1"<<std::endl;
+    //m_planes = getPlanes();
+//    std::cout<<"ExtrudedObject::ExtrudedObject(const ExtrudedObject&) 2"<<std::endl;
+}
+
+ExtrudedObject::ExtrudedObject(ExtrudedObject&& other)
+    : m_vertices(std::move(other.m_vertices))
+    , m_position(std::move(other.m_position))
+    , m_thickness(std::move(other.m_thickness))
+    , m_planes(std::move(other.m_planes))
+    , m_rotation_matrix(std::move(other.m_rotation_matrix))
+{
+//    std::cout<<"ExtrudedObject::ExtrudedObject(ExtrudedObject&&) 1"<<std::endl;
+    //m_planes = getPlanes();
+//    std::cout<<"ExtrudedObject::ExtrudedObject(ExtrudedObject&&) 2"<<std::endl;
+}
+
 ExtrudedObject::ExtrudedObject(const std::vector<Point>& vertices, const Point& position, double thickness)
     : m_vertices(vertices)
     , m_position(position)
@@ -214,38 +238,60 @@ auto ExtrudedObject::getPlanes() const -> std::vector<Plane>
     return planes;
 }
 
+auto ExtrudedObject::get_vertices() const -> std::vector<Point>
+{
+    std::vector<Point> points {};
+    if (m_vertices.size() < 3) {
+        throw std::runtime_error("Error in ExtrudedObject::getVertices(): insufficient number of vertices (" + std::to_string(m_vertices.size()) + ")!");
+        std::cerr << "Error in ExtrudedObject::getVertices(): insufficient number of vertices (" << m_vertices.size() << ")!\n";
+        return points;
+    }
+    for (const auto vertex : m_vertices) {
+        Point p1 { Point { vertex[0], vertex[1], 0. } };
+        Point p2 { Point { vertex[0], vertex[1], m_thickness } };
+        p1 = m_rotation_matrix * p1;
+        p2 = m_rotation_matrix * p2;
+        p1 += m_position;
+        p2 += m_position;
+        points.push_back(std::move(p1));
+        points.push_back(std::move(p2));
+    }
+    return points;
+}
+
 auto ExtrudedObject::bounding_box() const -> std::pair<Point, Point>
 {
-    Vector min_coordinates {
+    Vector min_coordinates {  
         std::numeric_limits<double>::max(),
         std::numeric_limits<double>::max(),
-        0.
+        std::numeric_limits<double>::max()
     };
     Vector max_coordinates {
         std::numeric_limits<double>::lowest(),
         std::numeric_limits<double>::lowest(),
-        0.
+        std::numeric_limits<double>::lowest()
     };
-    for (const auto& vertex : m_vertices) {
+
+    auto vertices { get_vertices() };
+    
+    for (const auto vertex : vertices) {
         if (vertex[0] < min_coordinates[0]) {
             min_coordinates[0] = vertex[0];
+        } else if (vertex[0] > max_coordinates[0]) {
+            max_coordinates[0] = vertex[0];
         }
         if (vertex[1] < min_coordinates[1]) {
             min_coordinates[1] = vertex[1];
-        }
-        if (vertex[0] > max_coordinates[0]) {
-            max_coordinates[0] = vertex[0];
-        }
-        if (vertex[1] > max_coordinates[1]) {
+        } else if (vertex[1] > max_coordinates[1]) {
             max_coordinates[1] = vertex[1];
         }
+        if (vertex[2] < min_coordinates[2]) {
+            min_coordinates[2] = vertex[2];
+        } else if (vertex[2] > max_coordinates[2]) {
+            max_coordinates[2] = vertex[2];
+        }
     }
-
-    max_coordinates += { 0., 0., m_thickness };
-    min_coordinates = m_rotation_matrix * min_coordinates;
-    max_coordinates = m_rotation_matrix * max_coordinates;
-    min_coordinates += m_position;
-    max_coordinates += m_position;
+    
     if (min_coordinates[0] > max_coordinates[0])
         std::swap(min_coordinates[0], max_coordinates[0]);
     if (min_coordinates[1] > max_coordinates[1])
@@ -257,17 +303,19 @@ auto ExtrudedObject::bounding_box() const -> std::pair<Point, Point>
 
 void ExtrudedObject::add_rotation(const Vector& rot_axis, double rot_angle)
 {
-    //std::cout<<"matrix before rot:\n";
-    //std::cout<<m_rotation_matrix;
+//    std::cout<<"matrix before rot:\n";
+//    std::cout<<m_rotation_matrix;
+    Point pos { position() };
+    pos = ::rotate(pos, rot_axis, rot_angle);
+    set_position(pos);
     matrix2d<double> K { 3,
         { 0., -rot_axis[2], rot_axis[1],
             rot_axis[2], 0., -rot_axis[0],
             -rot_axis[1], rot_axis[0], 0. } };
-
     matrix2d R { R3::Identity + std::sin(rot_angle) * K + (1. - std::cos(rot_angle)) * (K * K) };
-    m_rotation_matrix = m_rotation_matrix * R;
-    //std::cout<<"matrix after rot:\n";
-    //std::cout<<m_rotation_matrix;
+    m_rotation_matrix = R * m_rotation_matrix;
+//    std::cout<<"matrix after rot:\n";
+//    std::cout<<m_rotation_matrix;
     m_planes = getPlanes();
 }
 
