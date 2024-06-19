@@ -25,6 +25,8 @@
 constexpr double MEAN_ELOSS { 0.16 }; ///!< mean energy loss in MeV/mm
 constexpr double ELOSS_WIDTH { 0.2 * MEAN_ELOSS }; ///!< width of e loss distribution
 
+constexpr double c_sqrt2 { std::sqrt(2.) };
+
 /** @brief The cumulative distribution function (CDF) for the cos^2(x) PDF distribution
  * This CDF is used for the calculation of the Probability Density Function (PDF)
  * of the cos^2(x) distribution for generating random values following the angular distribution
@@ -35,23 +37,29 @@ auto cos2cdf = [](double x, const std::vector<double>& params = std::vector<doub
     return (2 / pi()) * (x / 2. + sin(2. * x) / 4.) + 0.5; //from Wolfram Alpha
 };
 
-//erfc(e^(-(x - μ)/(2 σ))/sqrt(2))≈erfc(exp(-(0.5 (x - μ))/σ))/sqrt(2))
+/** @brief The cumulative distribution function (CDF) for the Moyal PDF distribution
+ * as an approximation of the Landau-Gaus distribution describing the energy loss
+ * of charged particles in finite absorbers.
+ * This CDF is used for the calculation of the Probability Density Function (PDF)
+ * of the energy loss distribution for generating random values of energy deposit
+ * due to straggling.
+ * Note: erfc(e^(-(x - μ)/(2 σ))/sqrt(2))≈erfc(exp(-(0.5 (x - μ))/σ))/sqrt(2))
+ */
 auto moyal_cdf = [](double x, const std::vector<double>& params) {
     assert(params.size() == 2);
     //return cdf to following pdf: Moayal distribution
-    constexpr double c_sqrt2 { std::sqrt(2.) };
     return std::erfc(std::exp(-0.5*(x-params.at(0))/params.at(1))/c_sqrt2);
 };
 
 
 void theta_scan(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta_min, double theta_max, std::size_t nr_bins, std::vector<Histogram>* histos)
 {
-/*
-    if (setup.ref_detector() == setup.detectors().end()) {
-        std::cerr << "no reference detector defined in DetectorSetup!\n";
+
+    if (setup.ref_volume() == ExtrudedObject::invalid_volume()) {
+        std::cerr << "no reference volume defined in DetectorSetup!\n";
         return;
     }
-*/
+
     Histogram acc_hist("acceptance_scan_theta",
         nr_bins,
         0., theta_max);
@@ -164,6 +172,7 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
                 coincidence = false;
             }
         }
+
         if (coincidence) {
             /*
             std::cout << "coincidence detected n="<< n << " " << std::setw(2) << toDeg(theta) << " " << toDeg(phi) << "\n";
@@ -265,8 +274,8 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
         auto bounds { det.bounding_box() };
         double max_pl = norm(bounds.second - bounds.first);
         //std::cout << "det " << std::to_string(det_index+1) << ": max dim=" << max_pl << std::endl;
-        Histogram pl_hist("pathlength_det"+std::to_string(det_index+1), 500U, 0., max_pl*0.1);
-        Histogram eloss_hist("eloss_det"+std::to_string(det_index+1), 500U, 0., MEAN_ELOSS*max_pl*0.1);
+        Histogram pl_hist("pathlength_det"+std::to_string(det_index+1), 500U, 0., max_pl * 1.0);
+        Histogram eloss_hist("eloss_det"+std::to_string(det_index+1), 500U, 0., MEAN_ELOSS * max_pl * 2.0);
         pathlength_histos.emplace_back( std::move(pl_hist) );
         eloss_histos.emplace_back( std::move(eloss_hist) );
         det_index++;
@@ -285,19 +294,16 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
         bounds.first[0],
         bounds.second[0],
     };
-//    std::cout << "x-bounds: min=" << bounds.first[0] << " max=" << bounds.second[0] << "\n";
 
     std::uniform_real_distribution<> distro_y {
         bounds.first[1],
         bounds.second[1],
     };
-//    std::cout << "y-bounds: min=" << bounds.first[1] << " max=" << bounds.second[1] << "\n";
 
     std::uniform_real_distribution<> distro_z {
         bounds.first[2],
         bounds.second[2]
     };
-//    std::cout << "z-bounds: min=" << bounds.first[2] << " max=" << bounds.second[2] << "\n";
 
     std::uniform_real_distribution<> distro_phi(-pi(), pi());
     SampledDistribution distro_theta(cos2cdf, 0., pi() / 2., std::vector<double>{});
@@ -366,9 +372,7 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
 MeasurementVector<double, double> cosmic_simulation_detector_sweep(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, const Vector& detector_rotation_axis, double detector_min_angle, double detector_max_angle, std::size_t nr_angles, int coinc_level)
 {
     MeasurementVector<double, double> data_series {};
-    //std::cout<<"rot matrix of orig. setup:\n"<<setup.ref_detector()->get_rotation_matrix();
     auto rotated_setup { setup };
-    //std::cout<<"rot matrix of copied setup:\n"<<rotated_setup.ref_detector()->get_rotation_matrix();
     const double dtheta { (detector_max_angle - detector_min_angle) / std::max<std::size_t>(1, (nr_angles - 1)) };
     std::cout << "min angle=" << detector_min_angle << ", dtheta=" << dtheta << "\n";
     double angle { detector_min_angle };
@@ -379,7 +383,7 @@ MeasurementVector<double, double> cosmic_simulation_detector_sweep(const Detecto
         data_series.emplace_back(DataItem<double>({ angle, dtheta }), std::move(item));
         angle += dtheta;
         rotated_setup.rotate(detector_rotation_axis, dtheta);
-//        std::cout<<"rot matrix of rotated setup:\n"<<rotated_setup.ref_detector()->get_rotation_matrix();
+//        std::cout<<"rot matrix of rotated setup:\n"<<rotated_setup.ref_volume()->get_rotation_matrix();
     }
     return data_series;
 }

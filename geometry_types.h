@@ -120,3 +120,4 @@ protected:
     matrix2d<double> m_rotation_matrix { R3::Identity }; //<! the 3x3 rotation matrix
     auto getPlanes() const -> std::vector<Plane>;
 };
+

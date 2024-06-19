@@ -28,7 +28,6 @@ DetectorSetup::DetectorSetup(const DetectorSetup& other)
 
 void DetectorSetup::add_detector(const ExtrudedObject& det)
 {
-//    std::cout<<"DetectorSetup::add_detector(ExtrudedObject) 1"<<std::endl;
     m_detectors.push_back( ExtrudedObject{ det } );
     //m_detectors.emplace_back( ExtrudedObject { det } );
 }

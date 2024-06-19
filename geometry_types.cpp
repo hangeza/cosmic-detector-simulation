@@ -131,9 +131,6 @@ ExtrudedObject::ExtrudedObject(ExtrudedObject&& other)
     , m_planes(std::move(other.m_planes))
     , m_rotation_matrix(std::move(other.m_rotation_matrix))
 {
-//    std::cout<<"ExtrudedObject::ExtrudedObject(ExtrudedObject&&) 1"<<std::endl;
-    //m_planes = getPlanes();
-//    std::cout<<"ExtrudedObject::ExtrudedObject(ExtrudedObject&&) 2"<<std::endl;
 }
 
 ExtrudedObject::ExtrudedObject(const std::vector<Point>& vertices, const Point& position, double thickness)
