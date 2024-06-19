@@ -43,6 +43,15 @@ bool isFuzzySame(const std::valarray<double>& a, const std::valarray<double>& b,
     return inEpsilon(norm(a - b), eps);
 }
 
+double getBoundingBoxVolume(const std::pair<Point,Point>& bb) {
+    double volume {};
+    double lx { bb.second[0] - bb.first[0] };
+    double ly { bb.second[1] - bb.first[1] };
+    double lz { bb.second[2] - bb.first[2] };
+    volume = lx * ly * lz;
+    return volume;
+}
+
 Point rotate(const Point& p, const Vector& rot_axis, double rot_angle)
 {
     const Vector k { rot_axis / norm(rot_axis) };
