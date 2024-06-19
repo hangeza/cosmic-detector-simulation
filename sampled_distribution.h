@@ -33,7 +33,7 @@ public:
     };
 
     template <typename F>
-    SampledDistribution(F&& cdfFunc, const T low, const T high, const std::vector<T>& params , const unsigned resolution = 4096)
+    SampledDistribution(F&& cdfFunc, const T low, const T high, const std::vector<T>& params, const unsigned resolution = 4096)
     {
         if (low >= high)
             throw InvalidBounds("");

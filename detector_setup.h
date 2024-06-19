@@ -17,12 +17,12 @@ public:
     struct TriggerClass {
         unsigned number { 1u };
         bool invert { false };
-        std::function< bool(bool, bool) > logic_function { std::logical_or<bool>{} };
+        std::function<bool(bool, bool)> logic_function { std::logical_or<bool> {} };
     };
     DetectorSetup() = default;
     DetectorSetup(const DetectorSetup& other);
     DetectorSetup(DetectorSetup&& other);
-    DetectorSetup(const std::vector<ExtrudedObject>& detectorlist, const ExtrudedObject& ref_volume= ExtrudedObject::invalid_volume());
+    DetectorSetup(const std::vector<ExtrudedObject>& detectorlist, const ExtrudedObject& ref_volume = ExtrudedObject::invalid_volume());
 
     auto detectors() -> std::vector<ExtrudedObject>& { return m_detectors; }
     auto detectors() const -> const std::vector<ExtrudedObject>& { return m_detectors; }
@@ -34,7 +34,6 @@ public:
     void reset_rotation();
 
     auto intersection(const Line& path) const -> std::vector<LineSegment>;
-
 
 private:
     std::vector<ExtrudedObject> m_detectors {};

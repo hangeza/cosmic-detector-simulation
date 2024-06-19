@@ -49,7 +49,7 @@ auto main() -> int
     // define the coincidence level, i.e. the number of detectors in a setup which have to provide a signal for one event
     // -1 for auto, i.e. coinc level is set to the number of detectors
     constexpr int min_coincidence_count { -1 };
-    
+
     // vector of 2d polygon vertices defining the shape (in x-y-plane) of the detector.
     // note, that the points have to be in geometrical sequential order in
     // counter-clockwise orientation (i.e. a sequence of points defining the detector outline
@@ -152,30 +152,28 @@ auto main() -> int
         setup.add_detector(det_l2x);
         setup.add_detector(det_l2y);
     }
-*/    
-
-
+*/
 
     // add a rotation to the entire system
     // the pivot point is the origin in the detector coordinate system
     // all detectors are rotated at the pivot about the given axis and a given angle
     setup.rotate(detector_rotation_axis, detector_rotation_angle);
 
-    for ( const auto& detector : setup.detectors() ) {
+    for (const auto& detector : setup.detectors()) {
         auto bounds { detector.bounding_box() };
         Point dimensions { bounds.second - bounds.first };
-        std::cout << "** Detector **" << std::endl; 
-        std::cout << "detector bounds: min=" << bounds.first << " max=" << bounds.second <<    "\n";
+        std::cout << "** Detector **" << std::endl;
+        std::cout << "detector bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
         std::cout << "detector dimensions=" << dimensions << "\n";
     }
-    
+
     // simulate the effective area (geometric aperture) at theta=0 of the detector system
     // this quantity may be used later to infer the expected detector count rate
     [[maybe_unused]] const double effective_area_sqm { simulate_geometric_aperture(setup, gen, nr_events) };
-    
+
     // uncomment the following block to calculate the double differential acceptance
     // as function of phi and theta
-/*
+    /*
     [[maybe_unused]] const auto acceptance_phi_theta = theta_phi_scan<361, 46>(setup, gen, nr_events, 0., theta_max, -pi(), pi());
 */
 
@@ -184,7 +182,7 @@ auto main() -> int
 
     // run a scan over theta angle (uniformly distributed)
     // to record the detector acceptance, if required
-/*
+    /*
     theta_scan(setup, gen, nr_events, 0., theta_max, nr_bins, &histos);
 */
 

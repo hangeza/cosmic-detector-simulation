@@ -107,9 +107,10 @@ public:
     void reset_rotation_matrix();
     friend bool operator==(const ExtrudedObject& lhs, const ExtrudedObject& rhs);
     friend bool operator!=(const ExtrudedObject& lhs, const ExtrudedObject& rhs);
-    static ExtrudedObject invalid_volume() {
+    static ExtrudedObject invalid_volume()
+    {
         ExtrudedObject volume {};
-        return std::move( volume );
+        return std::move(volume);
     }
 
 protected:
@@ -120,4 +121,3 @@ protected:
     matrix2d<double> m_rotation_matrix { R3::Identity }; //<! the 3x3 rotation matrix
     auto getPlanes() const -> std::vector<Plane>;
 };
-

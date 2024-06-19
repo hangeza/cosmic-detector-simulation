@@ -8,7 +8,7 @@
 DetectorSetup::DetectorSetup(const std::vector<ExtrudedObject>& detectorlist, const ExtrudedObject& ref_volume)
     : m_detectors(detectorlist)
 {
-    if (ref_volume==ExtrudedObject::invalid_volume()) {
+    if (ref_volume == ExtrudedObject::invalid_volume()) {
         // invalid ref volume...setting to 2*bounding box
         auto bounds { this->bounding_box() };
         bounds.first *= 2;
@@ -28,13 +28,13 @@ DetectorSetup::DetectorSetup(const DetectorSetup& other)
 
 void DetectorSetup::add_detector(const ExtrudedObject& det)
 {
-    m_detectors.push_back( ExtrudedObject{ det } );
+    m_detectors.push_back(ExtrudedObject { det });
     //m_detectors.emplace_back( ExtrudedObject { det } );
 }
 
 auto DetectorSetup::bounding_box() const -> std::pair<Point, Point>
 {
-    Vector min_coordinates {  
+    Vector min_coordinates {
         std::numeric_limits<double>::max(),
         std::numeric_limits<double>::max(),
         std::numeric_limits<double>::max()
@@ -49,7 +49,7 @@ auto DetectorSetup::bounding_box() const -> std::pair<Point, Point>
         auto bb = detector.bounding_box();
         auto minbound = bb.first;
         auto maxbound = bb.second;
-        
+
         if (minbound[0] < min_coordinates[0]) {
             min_coordinates[0] = minbound[0];
         }
@@ -69,7 +69,7 @@ auto DetectorSetup::bounding_box() const -> std::pair<Point, Point>
             max_coordinates[2] = maxbound[2];
         }
     }
-    
+
     return std::make_pair<Point, Point>(std::move(min_coordinates), std::move(max_coordinates));
 }
 

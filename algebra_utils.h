@@ -50,7 +50,7 @@ bool isFuzzySame(const std::valarray<double>& a, const std::valarray<double>& b,
  */
 Point rotate(const Point& p, const Vector& rot_axis, double rot_angle);
 
-double getBoundingBoxVolume(const std::pair<Point,Point>& bb);
+double getBoundingBoxVolume(const std::pair<Point, Point>& bb);
 
 Vector operator*(const matrix2d<double>& lhs, const Vector& rhs);
 std::ostream& operator<<(std::ostream& os, const std::valarray<double>& p);
