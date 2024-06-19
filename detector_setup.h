@@ -22,13 +22,14 @@ public:
     DetectorSetup() = default;
     DetectorSetup(const DetectorSetup& other);
     DetectorSetup(DetectorSetup&& other);
-    DetectorSetup(const std::vector<ExtrudedObject>& detectorlist);
+    DetectorSetup(const std::vector<ExtrudedObject>& detectorlist, const ExtrudedObject& ref_volume= ExtrudedObject::invalid_volume());
 
     auto detectors() -> std::vector<ExtrudedObject>& { return m_detectors; }
     auto detectors() const -> const std::vector<ExtrudedObject>& { return m_detectors; }
     void add_detector(const ExtrudedObject& det);
-    ExtrudedObject& ref_detector() { return *m_detectors.begin(); }
-    const ExtrudedObject& ref_detector() const { return *m_detectors.cbegin(); }
+    void set_ref_volume(const ExtrudedObject& ref_volume) { m_ref_volume = ref_volume; }
+    auto ref_volume() const -> const ExtrudedObject& { return m_ref_volume; }
+    auto bounding_box() const -> std::pair<Point, Point>;
     void rotate(const Vector& rot_axis, double rot_angle);
     void reset_rotation();
 
@@ -37,6 +38,6 @@ public:
 
 private:
     std::vector<ExtrudedObject> m_detectors {};
-    std::vector<ExtrudedObject>::iterator m_ref_detector {};
+    ExtrudedObject m_ref_volume {};
     std::string m_name {};
 };

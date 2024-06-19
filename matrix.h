@@ -79,6 +79,23 @@ public:
   // basic item retrieval
   T operator()(std::size_t r, std::size_t c) const;
 
+  friend bool operator==(const matrix2d& A, const matrix2d& B)
+  {
+        assert(A.cols() == B.cols() && A.rows() == B.rows());
+        bool equal { true };
+        for(size_t i = 0; i < A.rows(); ++i) {
+            for(size_t j = 0; j < B.cols(); ++j) {
+                equal = equal && (A(i,j) == B(i,j));
+            }
+        }
+        return equal;
+  }
+
+  friend bool operator!=(const matrix2d& A, const matrix2d& B)
+  {
+      return !(A==B);
+  }
+  
   friend matrix2d operator*(const matrix2d& A, const matrix2d& B)
   {
         assert(A.cols() == B.rows());

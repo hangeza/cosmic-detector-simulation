@@ -4,6 +4,24 @@
 
 #include <iostream>
 #include <limits>
+#include <algorithm>
+
+
+bool operator==(const ExtrudedObject& lhs, const ExtrudedObject& rhs)
+{
+    bool equal { false };
+    if (lhs.m_vertices.size() != rhs.m_vertices.size()) return false;
+    if (lhs.m_thickness != rhs.m_thickness) return false;
+    if (!isFuzzySame(lhs.m_position, rhs.m_position)) return false;
+    if (!std::equal(lhs.m_vertices.cbegin(), lhs.m_vertices.cend(), rhs.m_vertices.cbegin(), [](const Point& a, const Point& b) { return isFuzzySame(a,b);})) return false;
+    if (lhs.m_rotation_matrix != rhs.m_rotation_matrix) return false;
+    return true;
+}
+
+bool operator!=(const ExtrudedObject& lhs, const ExtrudedObject& rhs) 
+{
+    return !(lhs == rhs); 
+}
 
 auto Line::operator()(double t) const -> Point
 {
@@ -77,6 +95,15 @@ void Plane::rotate(const matrix2d<double>& rot_matrix)
     *this = new_plane;
 }
 
+ExtrudedObject::ExtrudedObject()
+    : m_vertices( {} )
+    , m_position( {} )
+    , m_thickness( 0. )
+    , m_planes( {} )
+    , m_rotation_matrix(R3::Identity)
+{
+}
+
 ExtrudedObject::ExtrudedObject(const ExtrudedObject& other)
     : m_vertices(other.m_vertices)
     , m_position(other.m_position)
@@ -84,9 +111,17 @@ ExtrudedObject::ExtrudedObject(const ExtrudedObject& other)
     , m_planes(other.m_planes)
     , m_rotation_matrix(other.m_rotation_matrix)
 {
-//    std::cout<<"ExtrudedObject::ExtrudedObject(const ExtrudedObject&) 1"<<std::endl;
-    //m_planes = getPlanes();
-//    std::cout<<"ExtrudedObject::ExtrudedObject(const ExtrudedObject&) 2"<<std::endl;
+}
+
+
+ExtrudedObject& ExtrudedObject::operator=(const ExtrudedObject& other) 
+{
+    m_vertices = other.m_vertices;
+    m_position = other.m_position;
+    m_thickness = other.m_thickness;
+    m_planes = other.m_planes;
+    m_rotation_matrix = other.m_rotation_matrix;
+    return *this;
 }
 
 ExtrudedObject::ExtrudedObject(ExtrudedObject&& other)
@@ -121,6 +156,23 @@ ExtrudedObject::ExtrudedObject(const Point& position, double radius, double thic
         };
         m_vertices.emplace_back(std::move(p));
     }
+    m_planes = getPlanes();
+}
+
+ExtrudedObject::ExtrudedObject(const std::pair<Point, Point>& bounding_box)
+{
+    const auto minbound { bounding_box.first };
+    const auto maxbound { bounding_box.second };
+    
+    m_vertices.push_back( { minbound[0], minbound[1] } );
+    m_vertices.push_back( { maxbound[0], minbound[1] } );
+    m_vertices.push_back( { maxbound[0], maxbound[1] } );
+    m_vertices.push_back( { minbound[0], maxbound[1] } );
+    
+    m_position = { (minbound + maxbound)/2 };
+    m_position[2] = minbound[2];
+    m_thickness = maxbound[2] - minbound[2];
+    
     m_planes = getPlanes();
 }
 

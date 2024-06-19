@@ -88,11 +88,13 @@ struct Plane {
  */
 class ExtrudedObject {
 public:
-    ExtrudedObject() = delete;
+    ExtrudedObject();
     ExtrudedObject(const ExtrudedObject& other);
     ExtrudedObject(ExtrudedObject&& other);
     ExtrudedObject(const std::vector<Point>& vertices, const Point& position, double thickness);
     ExtrudedObject(const Point& position, double radius, double thickness, std::size_t nr_vertices = 32);
+    ExtrudedObject(const std::pair<Point, Point>& bounding_box);
+    ExtrudedObject& operator=(const ExtrudedObject& other);
     const auto position() const -> Point;
     void set_position(const Point& new_pos);
     auto thickness() const -> double;
@@ -103,6 +105,12 @@ public:
     void add_rotation(const Vector& rot_axis, double rot_angle);
     auto get_rotation_matrix() -> const matrix2d<double>&;
     void reset_rotation_matrix();
+    friend bool operator==(const ExtrudedObject& lhs, const ExtrudedObject& rhs);
+    friend bool operator!=(const ExtrudedObject& lhs, const ExtrudedObject& rhs);
+    static ExtrudedObject invalid_volume() {
+        ExtrudedObject volume {};
+        return std::move( volume );
+    }
 
 protected:
     std::vector<Point> m_vertices {}; //<! the vector of 2d vertices defining the object's outline

@@ -56,7 +56,7 @@ void theta_scan(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_ev
         nr_bins,
         0., theta_max);
 
-    const auto bounds { setup.ref_detector().bounding_box() };
+    const auto bounds { setup.ref_volume().bounding_box() };
 
     std::uniform_real_distribution<> distro_x {
         bounds.first[0],
@@ -85,7 +85,7 @@ void theta_scan(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_ev
                 { distro_x(gen), distro_y(gen), distro_z(gen) }, theta, phi) };
 
             bool coincidence { false };
-            LineSegment refdet_path { setup.ref_detector().intersection(line) };
+            LineSegment refdet_path { setup.ref_volume().intersection(line) };
             if (refdet_path.length() > DEFAULT_EPSILON) {
                 mc_events++;
                 coincidence = true;
@@ -117,16 +117,15 @@ void theta_scan(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_ev
 
 double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta)
 {
-    /*
-    if (setup.ref_detector() == setup.detectors().end()) {
-        std::cerr << "no reference detector defined in DetectorSetup!\n";
-        return {};
+    if (setup.ref_volume() == ExtrudedObject::invalid_volume()) {
+        std::cerr << "no reference volume defined in DetectorSetup!\n";
+        return std::numeric_limits<double>::quiet_NaN();
     }
-*/
-    auto bounds { setup.ref_detector().bounding_box() };
+
+    auto bounds { setup.ref_volume().bounding_box() };
     Point dimensions { bounds.second - bounds.first };
-    std::cout << "detector bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
-    std::cout << "detector dimensions=" << dimensions << "\n";
+    std::cout << "ref volume bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
+    std::cout << "ref volume dimensions=" << dimensions << "\n";
 
     //bounds.first -= dimensions * 5;
     //bounds.second += dimensions * 5;
@@ -154,7 +153,8 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
         const double phi { (inEpsilon(theta)) ? 0. : distro_phi(gen) };
         Line line { Line::generate({ distro_x(gen), distro_y(gen), distro_z(gen) }, theta, phi) };
         bool coincidence { true };
-        LineSegment refdet_path { setup.ref_detector().intersection(line) };
+        LineSegment refdet_path { setup.ref_volume().intersection(line) };
+        
         mc_events++;
         for (auto detector { setup.detectors().cbegin() };
              detector != setup.detectors().end();
@@ -185,13 +185,13 @@ template <int PHI_BINS = 256, int THETA_BINS = 256>
 std::array<std::array<double, THETA_BINS>, PHI_BINS> theta_phi_scan(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta_min, double theta_max, double phi_min, double phi_max)
 {
     std::array<std::array<double, THETA_BINS>, PHI_BINS> phi_theta_acceptance {};
-/*
-    if (setup.ref_detector() == setup.detectors().end()) {
-        std::cerr << "no reference detector defined in DetectorSetup!\n";
+
+    if (setup.ref_volume() == ExtrudedObject::invalid_volume()) {
+        std::cerr << "no reference volume defined in DetectorSetup!\n";
         return phi_theta_acceptance;
     }
-*/
-    const auto bounds { setup.ref_detector().bounding_box() };
+
+    const auto bounds { setup.ref_volume().bounding_box() };
     std::uniform_real_distribution<> distro_x {
         bounds.first[0],
         bounds.second[0],
@@ -220,7 +220,7 @@ std::array<std::array<double, THETA_BINS>, PHI_BINS> theta_phi_scan(const Detect
                     { distro_x(gen), distro_y(gen), distro_z(gen) }, theta, phi) };
 
                 bool coincidence { false };
-                LineSegment refdet_path { setup.ref_detector().intersection(line) };
+                LineSegment refdet_path { setup.ref_volume().intersection(line) };
                 if (refdet_path.length() > DEFAULT_EPSILON) {
                     mc_events++;
                     coincidence = true;
@@ -228,8 +228,6 @@ std::array<std::array<double, THETA_BINS>, PHI_BINS> theta_phi_scan(const Detect
                 for (auto detector { setup.detectors().cbegin() };
                      detector != setup.detectors().end();
                      ++detector) {
-                    if (detector == setup.detectors().cbegin())
-                        continue;
                     LineSegment det_path { detector->intersection(line) };
                     if (det_path.length() < DEFAULT_EPSILON) {
                         coincidence = false;
@@ -252,12 +250,11 @@ std::array<std::array<double, THETA_BINS>, PHI_BINS> theta_phi_scan(const Detect
 DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, std::vector<Histogram>* histos, std::size_t nr_bins, double theta_max, int coinc_level)
 {
     DataItem<double> data_item {};
-/*
-    if (setup.ref_detector() == setup.detectors().end()) {
-        std::cerr << "no reference detector defined in DetectorSetup!\n";
+
+    if (setup.ref_volume() == ExtrudedObject::invalid_volume()) {
+        std::cerr << "no reference volume defined in DetectorSetup!\n";
         return DataItem<double> {};
     }
-*/
 
     const std::size_t n_detectors { setup.detectors().size() };
     std::map<std::size_t, double> pathlength_values {};
@@ -276,14 +273,14 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
     }
     
     if (coinc_level < 0)
-        coinc_level = setup.detectors().size();
+        coinc_level = setup.detectors().size() + 1;
 
     Histogram theta_hist("theta_distribution", nr_bins, 0., theta_max);
     Histogram phi_hist("phi_distribution", nr_bins, -pi(), pi());
     Histogram theta_acc_hist("accepted_theta_distribution", nr_bins, 0., theta_max);
     Histogram phi_acc_hist("accepted_phi_distribution", nr_bins, -pi(), pi());
 
-    const auto bounds { setup.ref_detector().bounding_box() };
+    const auto bounds { setup.ref_volume().bounding_box() };
     std::uniform_real_distribution<> distro_x {
         bounds.first[0],
         bounds.second[0],
@@ -321,7 +318,7 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
         phi_hist.fill(phi);
 
         unsigned int coincidence { 0 };
-        LineSegment refdet_path { setup.ref_detector().intersection(line) };
+        LineSegment refdet_path { setup.ref_volume().intersection(line) };
         if (refdet_path.length() > 0.) {
             pathlength_values[0] = refdet_path.length();
             mc_events++;
@@ -333,8 +330,6 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
         for (auto detector { setup.detectors().cbegin() };
              detector != setup.detectors().end();
              ++detector, ++det_index) {
-            if (detector == setup.detectors().cbegin())
-                continue;
             LineSegment det_path { detector->intersection(line) };
             if (det_path.length() > 0.) {
                 pathlength_values[det_index] = det_path.length();
