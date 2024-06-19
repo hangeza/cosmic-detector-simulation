@@ -23,7 +23,7 @@
 #include "utilities.h"
 
 constexpr int g_verbosity { 3 };
-constexpr double muon_flux_literature_value { 50. };
+constexpr double muon_flux_literature_value { 70. };
 
 auto main() -> int
 {
