@@ -109,31 +109,57 @@ auto main() -> int
         { -500., -50. },
         { 500., -50. },
         { 500., 50. },
-        { -500., 50. },
+        { -500., 50. }
     };
+
+    // definition of the JLU cubical plastic neutron detector
+    const std::vector<Point> neutron_cube_points {
+        { -50., -50. },
+        { 50., -50. },
+        { 50., 50. },
+        { -50., 50. }
+    };
+
+    // definition of a virtual reference volume
+    // in case a single detector is analysed, it should be embedded in the center of this volume
+    // this trick allows the determination of absolute count rates even for single detectors
+    // Note: the ref volume should fully contain the detector setup. Choose the dimensions to be larger
+    // than the bounding box of the detector setup by factor ~2
+    const std::vector<Point> ref_volume_points {
+        { -100., -100. },
+        { 100., -100. },
+        { 100., 100. },
+        { -100., 100. }
+    };
+    ExtrudedObject reference_box { ref_volume_points, { 0., 0., -100. }, 200. };
 
     // create 3d objects of type ExtrudedObject defined by the 2d outline,
     // a global position offset and a thickness
-    ExtrudedObject detector1 { large_bar_points, { 0., 0., -100. }, 100. };
-    ExtrudedObject detector2 { large_bar_points, { 0., 0., 100. }, 100. };
+    ExtrudedObject detector1 { large_paddle_points_lower, { 0., 0., -100. }, 7. };
+    ExtrudedObject detector2 { large_paddle_points_upper, { 0., 0., 100. }, 7. };
+
+    ExtrudedObject neutron_detector { neutron_cube_points, { 0., 0., -50. }, 100. };
 
     // create 3d objects of type ExtrudedObject but using the constructor for generation of a
     // circular shape specified by a global position offset, radius, thickness and an optional
     // number of vertex points to generate the circle
     ExtrudedObject round_detector1 { { 0., 0., 0. }, 50., 10. };
     ExtrudedObject round_detector2 { { 0., 0., 100. }, 50., 10. };
-    
+
     ExtrudedObject fiber { { 0., 0., -250. }, 0.5, 500., 16 };
-    fiber.add_rotation( R3::Base::Y, toRad(90.) );
-    
-        
-     DetectorSetup setup { {detector1, detector2} };
-     
+    fiber.add_rotation(R3::Base::Y, toRad(90.));
+
+    // Now create the detector setup consisting of one or more ExtrudedObject instances as detectors
+    // and a reference volume, which countains all detectors.
+    // In case the ref volume is not specified, the DetectorSetup instance will automatically infer one
+    // from the bounding box containing all detectors (+100% margin in each dimension)
+    DetectorSetup setup { { detector1, detector2 } /*, reference_box */ };
+
     // alternative example:
     // construct a detector setup with several detectors which are individually aligned
     // the setup describes a set of scintillating fibers which are rotated and shifted to
     // align along x and y axes
-/*
+    /*
     DetectorSetup setup { { } };
     //setup.add_detector(trigger_detector);
     for (std::size_t i = 0; i < 1; ++i) {

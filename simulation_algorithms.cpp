@@ -137,7 +137,7 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
     //bounds.first -= dimensions * 5;
     //bounds.second += dimensions * 5;
 
-    std::cout << "simulation bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
+    //std::cout << "simulation bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
 
     std::uniform_real_distribution<> distro_x {
         bounds.first[0],
