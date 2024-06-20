@@ -22,7 +22,7 @@
 #include "simulation_algorithms.h"
 #include "utilities.h"
 
-constexpr double MEAN_ELOSS { 0.16 }; ///!< mean energy loss in MeV/mm
+constexpr double MEAN_ELOSS { 0.18 }; ///!< mean energy loss in MeV/mm
 constexpr double ELOSS_WIDTH { 0.2 * MEAN_ELOSS }; ///!< width of e loss distribution
 
 constexpr double c_sqrt2 { std::sqrt(2.) };
