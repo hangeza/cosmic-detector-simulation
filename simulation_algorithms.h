@@ -79,6 +79,5 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
  * @param coinc_level the number of detectors which have to be crossed by a track in order to assert a coincidence event
  * @return A MeasurementVector<double> (aka std::vector<std::pair<DataItem<double>, DataItem<double>>) object containing the total acceptance (ratio of detected hits to generated tracks) and it's statistical error.
  * @note In case of an error, the histogram vector is not filled and the returned MeasurementVector object is default initialized and empty.
- * @note The setup object must have the ref_detector iterator set to any valid detector it contains.
 */
 MeasurementVector<double, double> cosmic_simulation_detector_sweep(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, const Vector& detector_rotation_axis, double detector_min_angle, double detector_max_angle, std::size_t nr_angles, int coinc_level = -1);
