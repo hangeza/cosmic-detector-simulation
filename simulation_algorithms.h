@@ -62,7 +62,6 @@ std::array<std::array<double, THETA_BINS>, PHI_BINS> theta_phi_scan(const Detect
  * @param coinc_level the number of detectors which have to be crossed by a track in order to assert a coincidence event
  * @return A DataItem<double> object containing the total acceptance (ratio of detected hits to generated tracks) and it's statistical error.
  * @note In case of an error, the histogram vector is not filled and the returned DataItem object is default initialized.
- * @note The setup object must have the ref_detector iterator set to any valid detector it contains.
 */
 DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, std::vector<Histogram>* histos = nullptr, std::size_t nr_bins = 90, double theta_max = pi() / 2, int coinc_level = -1);
 
