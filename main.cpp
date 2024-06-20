@@ -212,11 +212,43 @@ auto main() -> int
     theta_scan(setup, gen, nr_events, 0., theta_max, nr_bins, &histos);
 */
 
-    // now, run the full simulation and append the resulting histograms
+    // run a full simulation and append the resulting histograms
     // to the already existing histogram vector
-    cosmic_simulation(setup, gen, nr_events, &histos, nr_bins, theta_max, min_coincidence_count);
+    // this will simulate <nr-events> MC-generated tracks and returns the total acceptance
+    // i.e. the ratio of detected tracks to total generated tracks
+    DataItem<double> detector_acceptance { cosmic_simulation(setup, gen, nr_events, &histos, nr_bins, theta_max, min_coincidence_count) };
+    if (detector_acceptance.value != 0.) {
+        DataItem<double> countrate_item { detector_acceptance };
+        // calculate the count rate conversion based on given reference flux value
+        // scaled by the effective detector area
+        double countrate_conversion {
+            2. * pi() * effective_area_sqm / 3. * muon_flux_literature_value
+        };
+        // the conversion also must consider the ratio of the base area of the reference volume
+        // and the detector's effective area
+        if (!setup.ref_volume().get_vertices().empty()) {
+            auto bb { setup.ref_volume().bounding_box() };
+            const double lx { bb.second[0] - bb.first[0] };
+            const double ly { bb.second[1] - bb.first[1] };
+            const double base_area = lx * ly;
+            countrate_conversion *= 1e-6 * base_area / effective_area_sqm;
+        }
+        countrate_item.value *= countrate_conversion;
+        countrate_item.error *= countrate_conversion;
+        std::cout << "** Detector acceptance and expected count rate **" << std::endl;
+        std::cout << " acceptance = " << detector_acceptance.value << " +- " << detector_acceptance.error << "\n";
+        std::cout << " count rate = " << countrate_item.value << " +- " << countrate_item.error << "\n";
+    }
 
-    // run a sweep over angular range of detector orientation
+    // export each histogram into a separate file (human readable ASCII format)
+    for (auto histo : histos) {
+        histo.export_file(histo.getName() + ".hist");
+    }
+
+    // quit here in case an angular detector sweep is not required
+    exit(0);
+    
+    // alternatively: run a sweep over angular range of detector orientation
     // return a list of acceptance vs angle including statistical errors
     auto acceptance_dataseries { cosmic_simulation_detector_sweep(setup, gen, nr_events, detector_rotation_axis, toRad(-90.), toRad(90.), 181, min_coincidence_count) };
 
@@ -248,11 +280,6 @@ auto main() -> int
     // export data series for acceptance and count rate vs angle
     export_file(acceptance_dataseries, "detector_sweep_acceptances.dat");
     export_file(countrate_vs_angle_dataseries, "detector_sweep_countrate.dat");
-
-    // export each histogram into a separate file (human readable ASCII format)
-    for (auto histo : histos) {
-        histo.export_file(histo.getName() + ".hist");
-    }
 
     exit(0);
 }
