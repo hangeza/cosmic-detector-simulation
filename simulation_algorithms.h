@@ -43,8 +43,17 @@ void theta_scan(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_ev
 */
 double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta = 0.);
 
-/** @brief theta_scan
- * This function ...
+/** @brief theta_phi_scan
+ * This function calculates the differential angular acceptance in dependence of phi and theta
+ * @param setup DetectorSetup object containing the detector definitions
+ * @param gen random number generator (Mersenne-Twister engine of type std::mt19937)
+ * @param nr_events The number of tracks to be generated.
+ * @param theta_min the minimum theta angle for which the acceptance should be calculated (0..theta..pi/2)
+ * @param theta_max the maximum theta angle for which the acceptance should be calculated (0..theta..pi/2)
+ * @param phi_min the minimum phi angle for which the acceptance should be calculated (0..phi..2pi)
+ * @param phi_max the maximum phi angle for which the acceptance should be calculated (0..phi..2pi)
+ * @return a 2d array containing the acceptance values
+ * @note the template parameters PHI_BINS and THETA_BINS define the number of entries for each dimension in the array returned
 */
 template <int PHI_BINS = 256, int THETA_BINS = 256>
 std::array<std::array<double, THETA_BINS>, PHI_BINS> theta_phi_scan(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta_min, double theta_max, double phi_min, double phi_max);
