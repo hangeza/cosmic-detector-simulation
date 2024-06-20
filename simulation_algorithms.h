@@ -50,8 +50,8 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
  * @param nr_events The number of tracks to be generated.
  * @param theta_min the minimum theta angle for which the acceptance should be calculated (0..theta..pi/2)
  * @param theta_max the maximum theta angle for which the acceptance should be calculated (0..theta..pi/2)
- * @param phi_min the minimum phi angle for which the acceptance should be calculated (0..phi..2pi)
- * @param phi_max the maximum phi angle for which the acceptance should be calculated (0..phi..2pi)
+ * @param phi_min the minimum phi angle for which the acceptance should be calculated (-pi..phi..pi)
+ * @param phi_max the maximum phi angle for which the acceptance should be calculated (-pi..phi..pi)
  * @return a 2d array containing the acceptance values
  * @note the template parameters PHI_BINS and THETA_BINS define the number of entries for each dimension in the array returned
 */

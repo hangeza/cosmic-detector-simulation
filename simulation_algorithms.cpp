@@ -134,11 +134,6 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
     std::cout << "ref volume bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
     std::cout << "ref volume dimensions=" << dimensions << "\n";
 
-    //bounds.first -= dimensions * 5;
-    //bounds.second += dimensions * 5;
-
-    //std::cout << "simulation bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
-
     std::uniform_real_distribution<> distro_x {
         bounds.first[0],
         bounds.second[0]
@@ -173,9 +168,6 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
         }
 
         if (coincidence) {
-            /*
-            std::cout << "coincidence detected n="<< n << " " << std::setw(2) << toDeg(theta) << " " << toDeg(phi) << "\n";
-*/
             detector_events++;
         }
     }
