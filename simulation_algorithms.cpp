@@ -273,7 +273,7 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
     }
 
     if (coinc_level < 0)
-        coinc_level = setup.detectors().size() + 1;
+        coinc_level = setup.detectors().size();
 
     Histogram theta_hist("theta_distribution", nr_bins, 0., theta_max);
     Histogram phi_hist("phi_distribution", nr_bins, -pi(), pi());
@@ -300,8 +300,8 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
     SampledDistribution distro_theta(cos2cdf, 0., pi() / 2., std::vector<double> {});
     SampledDistribution distro_eloss(moyal_cdf, 0., 20., { MEAN_ELOSS, ELOSS_WIDTH });
 
-    std::size_t mc_events { 0 };
     std::size_t detector_events { 0 };
+    std::size_t coinc_events { 0 };
     for (std::size_t n = 0; n < nr_events; ++n) {
         const double theta { distro_theta(gen) };
         const double phi { distro_phi(gen) };
@@ -315,6 +315,8 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
         phi_hist.fill(phi);
 
         unsigned int coincidence { 0 };
+        
+        /*
         LineSegment refdet_path { setup.ref_volume().intersection(line) };
         if (refdet_path.length() > 0.) {
             pathlength_values[0] = refdet_path.length();
@@ -324,7 +326,13 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
             coincidence++;
         } else
             continue;
+        */
+        
+        if (n % 100'000 == 0 && n>0)
+            std::cout << n / 1000UL << "k MC events\n";
+
         det_index = 0;
+        bool any_detector_hit { false };
         for (auto detector { setup.detectors().cbegin() };
              detector != setup.detectors().end();
              ++detector, ++det_index) {
@@ -332,6 +340,10 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
             if (det_path.length() > 0.) {
                 pathlength_values[det_index] = det_path.length();
                 coincidence++;
+                if (!any_detector_hit) {
+                    any_detector_hit = true;
+                    detector_events++;
+                }
             }
         }
         if (coincidence >= coinc_level) {
@@ -342,10 +354,10 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
                 eloss_histos.at(detindex).fill(pathlength_value * eloss);
                 //std::cout << detindex << " " << std::setw(2) << toDeg(theta) << " " << toDeg(phi) << " " << pathlength_value << "\n";
             }
-            detector_events++;
+            coinc_events++;
         }
     }
-    std::cout << "MC events: " << mc_events << " detected events: " << detector_events << " acceptance: " << static_cast<double>(detector_events) / mc_events << " err(acceptance): " << std::sqrt(detector_events) / mc_events << "\n";
+    std::cout << "MC events: " << nr_events << " detector hit events: " << detector_events << " coinc events: " << coinc_events << " acceptance: " << static_cast<double>(coinc_events) / nr_events << " err(acceptance): " << std::sqrt(coinc_events) / nr_events << "\n";
     if (histos != nullptr) {
         histos->push_back(std::move(theta_hist));
         histos->push_back(std::move(phi_hist));
@@ -358,7 +370,7 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
             histos->insert(histos->end(), eloss_histos.begin(), eloss_histos.end());
         }
     }
-    return { static_cast<double>(detector_events) / mc_events, std::sqrt(detector_events) / mc_events };
+    return { static_cast<double>(coinc_events) / nr_events, std::sqrt(coinc_events) / nr_events };
 }
 
 MeasurementVector<double, double> cosmic_simulation_detector_sweep(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, const Vector& detector_rotation_axis, double detector_min_angle, double detector_max_angle, std::size_t nr_angles, int coinc_level)

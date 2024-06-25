@@ -216,25 +216,19 @@ auto main() -> int
 
     // run a full simulation and append the resulting histograms
     // to the already existing histogram vector
-    // this will simulate <nr-events> MC-generated tracks and returns the total acceptance
+    // this will simulate <nr-events> MC-generated tracks and return the total acceptance
     // i.e. the ratio of detected tracks to total generated tracks
     DataItem<double> detector_acceptance { cosmic_simulation(setup, gen, nr_events, &histos, nr_bins, theta_max, min_coincidence_count) };
     if (detector_acceptance.value != 0.) {
         DataItem<double> countrate_item { detector_acceptance };
         // calculate the count rate conversion based on given reference flux value
         // scaled by the effective detector area
+        const double ref_volume_volume { getBoundingBoxVolume(setup.ref_volume().bounding_box()) };
+        const double total_detector_volume { setup.get_total_volume() };
         double countrate_conversion {
             2. * pi() * effective_area_sqm / 3. * muon_flux_literature_value
         };
-        // the conversion also must consider the ratio of the base area of the reference volume
-        // and the detector's effective area
-        if (!setup.ref_volume().get_vertices().empty()) {
-            auto bb { setup.ref_volume().bounding_box() };
-            const double lx { bb.second[0] - bb.first[0] };
-            const double ly { bb.second[1] - bb.first[1] };
-            const double base_area = lx * ly;
-            countrate_conversion *= 1e-6 * base_area / effective_area_sqm;
-        }
+        countrate_conversion /= 1e6 * effective_area_sqm / setup.ref_volume().getBaseArea();
         countrate_item.value *= countrate_conversion;
         countrate_item.error *= countrate_conversion;
         std::cout << "** Detector acceptance and expected count rate **" << std::endl;
@@ -265,15 +259,7 @@ auto main() -> int
         double countrate_conversion {
             2. * pi() * effective_area_sqm / 3. * muon_flux_literature_value
         };
-        // the conversion also must consider the ratio of the base area of the reference volume
-        // and the detector's effective area
-        if (!setup.ref_volume().get_vertices().empty()) {
-            auto bb { setup.ref_volume().bounding_box() };
-            const double lx { bb.second[0] - bb.first[0] };
-            const double ly { bb.second[1] - bb.first[1] };
-            const double base_area = lx * ly;
-            countrate_conversion *= 1e-6 * base_area / effective_area_sqm;
-        }
+        countrate_conversion /= 1e6 * effective_area_sqm / setup.ref_volume().getBaseArea();
         countrate_item.value *= countrate_conversion;
         countrate_item.error *= countrate_conversion;
         countrate_vs_angle_dataseries.emplace_back(angle_value, countrate_item);
