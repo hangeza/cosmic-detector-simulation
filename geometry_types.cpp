@@ -373,6 +373,13 @@ void ExtrudedObject::add_rotation(const Vector& rot_axis, double rot_angle)
     m_planes = getPlanes();
 }
 
+auto ExtrudedObject::rotated(const Vector& rot_axis, double rot_angle) const -> ExtrudedObject
+{
+    ExtrudedObject rotated_object { *this };
+    rotated_object.add_rotation(rot_axis, rot_angle);
+    return std::move(rotated_object);
+}
+
 auto ExtrudedObject::get_rotation_matrix() -> const matrix2d<double>&
 {
     return m_rotation_matrix;

@@ -103,6 +103,7 @@ public:
     auto get_vertices() const -> std::vector<Point>;
     auto bounding_box() const -> std::pair<Point, Point>;
     void add_rotation(const Vector& rot_axis, double rot_angle);
+    auto rotated(const Vector& rot_axis, double rot_angle) const -> ExtrudedObject;
     auto get_rotation_matrix() -> const matrix2d<double>&;
     void reset_rotation_matrix();
     friend bool operator==(const ExtrudedObject& lhs, const ExtrudedObject& rhs);

@@ -191,6 +191,8 @@ auto main() -> int
         std::cout << "** Detector **" << std::endl;
         std::cout << "detector bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
         std::cout << "detector dimensions=" << dimensions << "\n";
+        std::cout << "detector base area=" << detector.getBaseArea() << "\n";
+        std::cout << "detector volume=" << detector.getVolume() << "\n";
     }
 
     // simulate the effective area (geometric aperture) at theta=0 of the detector system
