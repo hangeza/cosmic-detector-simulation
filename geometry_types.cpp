@@ -382,3 +382,29 @@ void ExtrudedObject::reset_rotation_matrix()
 {
     m_rotation_matrix = R3::Identity;
 }
+
+auto ExtrudedObject::getBaseArea() const -> double
+{
+    double area {0.};
+    auto startpoint { m_vertices.cbegin() };
+    double sum1 {0.};
+    double sum2 {0.};
+    for (auto vertex { m_vertices.cbegin() }; vertex != std::prev(m_vertices.cend()); ++vertex) {
+        auto p1 { vertex };
+        auto p2 { std::next(vertex) };
+        sum1 += (*p1)[0] * (*p2)[1];
+        sum2 += (*p1)[1] * (*p2)[0];
+    }
+    sum1 += (*std::prev(m_vertices.cend()))[0] * (*startpoint)[1];
+    sum2 += (*std::prev(m_vertices.cend()))[1] * (*startpoint)[0];
+    //std::cout<<"sum1="<<sum1<<" sum2="<<sum2<<"\n";
+    area = (sum1 - sum2)/2.;
+    //std::cout<<"area="<<area<<"\n";
+    return area;
+}
+
+auto ExtrudedObject::getVolume() const -> double
+{
+    double volume { 0. };
+    return getBaseArea() * m_thickness;
+}

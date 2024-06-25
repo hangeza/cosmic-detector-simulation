@@ -112,6 +112,8 @@ public:
         ExtrudedObject volume {};
         return std::move(volume);
     }
+    auto getBaseArea() const -> double;
+    auto getVolume() const -> double;
 
 protected:
     std::vector<Point> m_vertices {}; //<! the vector of 2d vertices defining the object's outline

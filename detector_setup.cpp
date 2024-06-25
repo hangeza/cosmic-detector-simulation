@@ -144,3 +144,12 @@ void DetectorSetup::rotate(const Vector& rot_axis, double rot_angle)
         detector.add_rotation(rot_axis, rot_angle);
     }
 }
+
+auto DetectorSetup::get_total_volume() const -> double
+{
+    double volume {};
+    for (auto& detector : m_detectors) {
+        volume += detector.getVolume();
+    }
+    return volume;
+}

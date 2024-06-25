@@ -32,6 +32,7 @@ public:
     auto bounding_box() const -> std::pair<Point, Point>;
     void rotate(const Vector& rot_axis, double rot_angle);
     void reset_rotation();
+    auto get_total_volume() const -> double;
 
     auto intersection(const Line& path) const -> std::vector<LineSegment>;
 
