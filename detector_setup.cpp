@@ -27,6 +27,13 @@ DetectorSetup::DetectorSetup(const DetectorSetup& other)
 {
 }
 
+DetectorSetup::DetectorSetup(DetectorSetup&& other)
+    : m_detectors(std::move(other.m_detectors))
+    , m_ref_volume(std::move(other.m_ref_volume))
+    , m_name(std::move(other.m_name))
+{
+}
+
 void DetectorSetup::add_detector(const ExtrudedObject& det)
 {
     m_detectors.push_back(ExtrudedObject { det });
