@@ -36,6 +36,7 @@ public:
     auto intersection(const Line& path) const -> std::vector<LineSegment>;
 
 private:
+    auto get_largest_bounding_box() const -> std::pair<Point, Point>;
     std::vector<ExtrudedObject> m_detectors {};
     ExtrudedObject m_ref_volume {};
     std::string m_name {};
