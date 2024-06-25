@@ -357,6 +357,8 @@ void ExtrudedObject::add_rotation(const Vector& rot_axis, double rot_angle)
 {
     //    std::cout<<"matrix before rot:\n";
     //    std::cout<<m_rotation_matrix;
+    if (inEpsilon(rot_angle))
+        return;
     Point pos { position() };
     pos = ::rotate(pos, rot_axis, rot_angle);
     set_position(pos);

@@ -32,15 +32,19 @@ auto cross_product(const Vector& a, const Vector& b) -> Vector
 
 bool inEpsilon(double value, double eps)
 {
-    if (std::fabs(value) > eps)
-        return false;
-    return true;
+    return (std::fabs(value) <= eps);
 }
 
 bool isFuzzySame(const std::valarray<double>& a, const std::valarray<double>& b, double eps)
 {
     assert(a.size() == b.size());
-    return inEpsilon(norm(a - b), eps);
+    if (!inEpsilon(norm(a - b), eps))
+        return false;
+    for (size_t i = 0; i < a.size(); ++i) {
+        if (!inEpsilon(a[i] - b[i]))
+            return false;
+    }
+    return true;
 }
 
 double getBoundingBoxVolume(const std::pair<Point, Point>& bb)
@@ -55,6 +59,8 @@ double getBoundingBoxVolume(const std::pair<Point, Point>& bb)
 
 Point rotate(const Point& p, const Vector& rot_axis, double rot_angle)
 {
+    if (inEpsilon(rot_angle))
+        return p;
     const Vector k { rot_axis / norm(rot_axis) };
     const double c { std::cos(rot_angle) };
     const double s { std::sin(rot_angle) };
