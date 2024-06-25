@@ -55,3 +55,5 @@ double getBoundingBoxVolume(const std::pair<Point, Point>& bb);
 Vector operator*(const matrix2d<double>& lhs, const Vector& rhs);
 std::ostream& operator<<(std::ostream& os, const std::valarray<double>& p);
 std::ostream& operator<<(std::ostream& os, const matrix2d<double>& m);
+bool operator==(const Vector& lhs, const Vector& rhs);
+bool operator!=(const Vector& lhs, const Vector& rhs);

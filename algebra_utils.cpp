@@ -89,3 +89,13 @@ std::ostream& operator<<(std::ostream& os, const matrix2d<double>& m)
     }
     return os;
 }
+
+bool operator==(const Vector& lhs, const Vector& rhs)
+{
+    return isFuzzySame(lhs, rhs);
+}
+
+bool operator!=(const Vector& lhs, const Vector& rhs)
+{
+    return !isFuzzySame(lhs, rhs);
+}
