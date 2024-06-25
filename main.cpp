@@ -223,8 +223,6 @@ auto main() -> int
         DataItem<double> countrate_item { detector_acceptance };
         // calculate the count rate conversion based on given reference flux value
         // scaled by the effective detector area
-        const double ref_volume_volume { getBoundingBoxVolume(setup.ref_volume().bounding_box()) };
-        const double total_detector_volume { setup.get_total_volume() };
         double countrate_conversion {
             2. * pi() * effective_area_sqm / 3. * muon_flux_literature_value
         };
