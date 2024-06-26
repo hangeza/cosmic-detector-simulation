@@ -40,6 +40,11 @@ void DetectorSetup::add_detector(const ExtrudedObject& det)
     //m_detectors.emplace_back( ExtrudedObject { det } );
 }
 
+void DetectorSetup::autogenerate_ref_volume()
+{
+    m_ref_volume = { this->get_largest_bounding_box() };
+}
+
 auto DetectorSetup::bounding_box() const -> std::pair<Point, Point>
 {
     Vector min_coordinates {

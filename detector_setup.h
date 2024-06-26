@@ -28,6 +28,7 @@ public:
     auto detectors() const -> const std::vector<ExtrudedObject>& { return m_detectors; }
     void add_detector(const ExtrudedObject& det);
     void set_ref_volume(const ExtrudedObject& ref_volume) { m_ref_volume = ref_volume; }
+    void autogenerate_ref_volume();
     auto ref_volume() const -> const ExtrudedObject& { return m_ref_volume; }
     auto bounding_box() const -> std::pair<Point, Point>;
     void rotate(const Vector& rot_axis, double rot_angle);
