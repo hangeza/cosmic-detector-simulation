@@ -197,7 +197,7 @@ auto main() -> int
 
     // simulate the effective area (geometric aperture) at theta=0 of the detector system
     // this quantity may be used later to infer the expected detector count rate
-    [[maybe_unused]] const double effective_area_sqm { simulate_geometric_aperture(setup, gen, nr_events) };
+    [[maybe_unused]] const double effective_area_sqm { simulate_geometric_aperture(setup, gen, nr_events * 10, 0, min_coincidence_count) };
 
     // uncomment the following block to calculate the double differential acceptance
     // as function of phi and theta

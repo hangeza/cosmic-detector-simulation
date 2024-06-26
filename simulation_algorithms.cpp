@@ -122,12 +122,15 @@ void theta_scan(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_ev
         histos->push_back(acc_hist);
 }
 
-double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta)
+double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta, int coinc_level)
 {
     if (setup.ref_volume() == ExtrudedObject::invalid_volume()) {
         std::cerr << "no reference volume defined in DetectorSetup!\n";
         return std::numeric_limits<double>::quiet_NaN();
     }
+
+    if (coinc_level < 0)
+        coinc_level = setup.detectors().size();
 
     auto bounds { setup.ref_volume().bounding_box() };
     Point dimensions { bounds.second - bounds.first };
@@ -154,7 +157,7 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
     for (std::size_t n = 0; n < nr_events; ++n) {
         const double phi { (inEpsilon(theta)) ? 0. : distro_phi(gen) };
         Line line { Line::generate({ distro_x(gen), distro_y(gen), distro_z(gen) }, theta, phi) };
-        bool coincidence { true };
+        unsigned int coincidence { 0 };
         LineSegment refdet_path { setup.ref_volume().intersection(line) };
 
         mc_events++;
@@ -162,12 +165,12 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
              detector != setup.detectors().end();
              ++detector) {
             LineSegment det_path { detector->intersection(line) };
-            if (det_path.length() < DEFAULT_EPSILON) {
-                coincidence = false;
+            if (det_path.length() > DEFAULT_EPSILON) {
+                coincidence++;
             }
         }
 
-        if (coincidence) {
+        if (coincidence >= coinc_level) {
             detector_events++;
         }
     }

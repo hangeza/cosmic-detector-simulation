@@ -41,7 +41,7 @@ void theta_scan(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_ev
  * to the number of tracks generated is taken as a measure of the area provided that
  * the scale of the detector dimensions is in millimeters.
 */
-double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta = 0.);
+double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta = 0., int coinc_level = -1);
 
 /** @brief theta_phi_scan
  * This function calculates the differential angular acceptance in dependence of phi and theta
