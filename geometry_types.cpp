@@ -392,10 +392,10 @@ void ExtrudedObject::reset_rotation_matrix()
 
 auto ExtrudedObject::getBaseArea() const -> double
 {
-    double area {0.};
+    double area { 0. };
     auto startpoint { m_vertices.cbegin() };
-    double sum1 {0.};
-    double sum2 {0.};
+    double sum1 { 0. };
+    double sum2 { 0. };
     for (auto vertex { m_vertices.cbegin() }; vertex != std::prev(m_vertices.cend()); ++vertex) {
         auto p1 { vertex };
         auto p2 { std::next(vertex) };
@@ -405,7 +405,7 @@ auto ExtrudedObject::getBaseArea() const -> double
     sum1 += (*std::prev(m_vertices.cend()))[0] * (*startpoint)[1];
     sum2 += (*std::prev(m_vertices.cend()))[1] * (*startpoint)[0];
     //std::cout<<"sum1="<<sum1<<" sum2="<<sum2<<"\n";
-    area = (sum1 - sum2)/2.;
+    area = (sum1 - sum2) / 2.;
     //std::cout<<"area="<<area<<"\n";
     return area;
 }

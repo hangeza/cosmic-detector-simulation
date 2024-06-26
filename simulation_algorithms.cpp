@@ -330,8 +330,8 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
         } else
             continue;
         */
-        
-        if (n % 100'000 == 0 && n>0)
+
+        if (n % 100'000 == 0 && n > 0)
             std::cout << n / 1000UL << "k MC events\n";
 
         det_index = 0;
