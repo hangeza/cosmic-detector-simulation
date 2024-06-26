@@ -317,25 +317,12 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
         theta_hist.fill(theta);
         phi_hist.fill(phi);
 
-        unsigned int coincidence { 0 };
-        
-        /*
-        LineSegment refdet_path { setup.ref_volume().intersection(line) };
-        if (refdet_path.length() > 0.) {
-            pathlength_values[0] = refdet_path.length();
-            mc_events++;
-            if (mc_events % 100'000 == 0)
-                std::cout << mc_events / 1000UL << "k MC events\n";
-            coincidence++;
-        } else
-            continue;
-        */
-
         if (n % 100'000 == 0 && n > 0)
             std::cout << n / 1000UL << "k MC events\n";
 
         det_index = 0;
         bool any_detector_hit { false };
+        unsigned int coincidence { 0 };
         for (auto detector { setup.detectors().cbegin() };
              detector != setup.detectors().end();
              ++detector, ++det_index) {
