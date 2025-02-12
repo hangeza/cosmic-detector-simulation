@@ -120,19 +120,6 @@ auto main() -> int
         { -50., 50. }
     };
 
-    // definition of a virtual reference volume
-    // in case a single detector is analysed, it should be embedded in the center of this volume
-    // this trick allows the determination of absolute count rates even for single detectors
-    // Note: the ref volume should fully contain the detector setup. Choose the dimensions to be larger
-    // than the bounding box of the detector setup by factor ~2
-    const std::vector<Point> ref_volume_points {
-        { -100., -100. },
-        { 100., -100. },
-        { 100., 100. },
-        { -100., 100. }
-    };
-    ExtrudedObject reference_box { ref_volume_points, { 0., 0., -100. }, 200. };
-
     // create 3d objects of type ExtrudedObject defined by the 2d outline,
     // a global position offset and a thickness
     ExtrudedObject detector1 { large_paddle_points_lower, { 0., 0., -100. }, 7. };
@@ -160,24 +147,46 @@ auto main() -> int
     // the setup describes a set of scintillating fibers which are rotated and shifted to
     // align along x and y axes
     /*
-    DetectorSetup setup { { } };
+    constexpr struct fibertracker_param_struct {
+        std::size_t nr_fibers_per_layer { 16 };
+        double fiber_diameter { 1.05 };
+        double fiber_radius { fiber_diameter/2 };
+        double fiber_length { 100. };
+        double sublayer_distance { 2. };
+        double layer_distance { 50. };
+        
+    } fiberparams;
+    DetectorSetup setup { {} };
     //setup.add_detector(trigger_detector);
-    for (std::size_t i = 0; i < 1; ++i) {
-        ExtrudedObject det_l1x { { 0., -8.+static_cast<double>(i)*1.+0.1, -250. }, 0.5, 500., 16 };
-        ExtrudedObject det_l1y { { -1., -8.5+static_cast<double>(i)*1.+0.1, -250. }, 0.5, 500., 16 };
-        ExtrudedObject det_l2x { { -3., -8.+static_cast<double>(i)*1.+0.1, -250. }, 0.5, 500., 16 };
-        ExtrudedObject det_l2y { { -4., -8.5+static_cast<double>(i)*1.+0.1, -250. }, 0.5, 500., 16 };
-        det_l1x.add_rotation( R3::Base::Y, toRad(90.) );
-        det_l1y.add_rotation( R3::Base::Y, toRad(90.) );
-        det_l1y.add_rotation( R3::Base::Z, toRad(90.) );
-        det_l2x.add_rotation( R3::Base::Y, toRad(90.) );
-        det_l2y.add_rotation( R3::Base::Y, toRad(90.) );
-        det_l2y.add_rotation( R3::Base::Z, toRad(90.) );
+    for (std::size_t i = 0; i < fiberparams.nr_fibers_per_layer; ++i) {
+        ExtrudedObject det_l1x { { 0., -8. + static_cast<double>(i) * 1. + 0.1, -fiberparams.fiber_length/2 }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
+        ExtrudedObject det_l1y { { -fiberparams.sublayer_distance, -8.5 + static_cast<double>(i) * 1. + 0.1, -fiberparams.fiber_length/2 }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
+        ExtrudedObject det_l2x { { -fiberparams.layer_distance, -8. + static_cast<double>(i) * 1. + 0.1, -fiberparams.fiber_length/2 }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
+        ExtrudedObject det_l2y { { -(fiberparams.layer_distance + fiberparams.sublayer_distance), -8.5 + static_cast<double>(i) * 1. + 0.1, -fiberparams.fiber_length/2 }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
+        det_l1x.add_rotation(R3::Base::Y, toRad(90.));
+        det_l1y.add_rotation(R3::Base::Y, toRad(90.));
+        det_l1y.add_rotation(R3::Base::Z, toRad(90.));
+        det_l2x.add_rotation(R3::Base::Y, toRad(90.));
+        det_l2y.add_rotation(R3::Base::Y, toRad(90.));
+        det_l2y.add_rotation(R3::Base::Z, toRad(90.));
         setup.add_detector(det_l1x);
         setup.add_detector(det_l1y);
         setup.add_detector(det_l2x);
         setup.add_detector(det_l2y);
     }
+    setup.autogenerate_ref_volume();
+    std::function<bool(const std::valarray<bool>&)> trigger_fn = [&fiberparams](const std::valarray<bool>& hitvector) {
+        bool first_xlayer_or { or_trigger(hitvector[std::slice(0,fiberparams.nr_fibers_per_layer,4)]) };
+        bool first_ylayer_or { or_trigger(hitvector[std::slice(1,fiberparams.nr_fibers_per_layer,4)]) };
+        bool second_xlayer_or { or_trigger(hitvector[std::slice(2,fiberparams.nr_fibers_per_layer,4)]) };
+        bool second_ylayer_or { or_trigger(hitvector[std::slice(3,fiberparams.nr_fibers_per_layer,4)]) };
+        //return true;
+        bool all_layer_coinc { first_xlayer_or && first_ylayer_or && second_xlayer_or && second_ylayer_or }; 
+        //if (all_layer_coinc) std::cout<<"trigger lambda: t1="<<first_xlayer_or<<std::endl;
+        return all_layer_coinc;
+    };
+    setup.set_trigger_function(trigger_fn);
+    
 */
 
     // add a rotation to the entire system
