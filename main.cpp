@@ -140,7 +140,12 @@ auto main() -> int
     // and a reference volume, which countains all detectors.
     // In case the ref volume is not specified, the DetectorSetup instance will automatically infer one
     // from the bounding box containing all detectors (+100% margin in each dimension)
-    DetectorSetup setup { { detector1, detector2 } /*, reference_box */ };
+    DetectorSetup setup { { detector1, detector2 } };
+
+    if (min_coincidence_count < 0)
+        setup.set_trigger_function(and_trigger);
+    else
+        setup.set_trigger_multiplicity(min_coincidence_count);
 
     // alternative example:
     // construct a detector setup with several detectors which are individually aligned
