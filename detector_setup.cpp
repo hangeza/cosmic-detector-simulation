@@ -39,6 +39,7 @@ DetectorSetup::DetectorSetup(const DetectorSetup& other)
     : m_detectors(other.m_detectors)
     , m_ref_volume(other.m_ref_volume)
     , m_name(other.m_name)
+    , m_trigger_function(other.m_trigger_function)
 {
 }
 
@@ -46,13 +47,14 @@ DetectorSetup::DetectorSetup(DetectorSetup&& other)
     : m_detectors(std::move(other.m_detectors))
     , m_ref_volume(std::move(other.m_ref_volume))
     , m_name(std::move(other.m_name))
+    , m_trigger_function(std::move(other.m_trigger_function))
 {
 }
 
-void DetectorSetup::add_detector(const ExtrudedObject& det)
+const auto DetectorSetup::add_detector(const ExtrudedObject& det) -> std::vector<ExtrudedObject>::const_iterator
 {
-    m_detectors.push_back(ExtrudedObject { det });
-    //m_detectors.emplace_back( ExtrudedObject { det } );
+    m_detectors.emplace_back(det);
+    return std::prev(m_detectors.cend());
 }
 
 void DetectorSetup::autogenerate_ref_volume()
@@ -169,4 +171,20 @@ auto DetectorSetup::get_total_volume() const -> double
         volume += detector.getVolume();
     }
     return volume;
+}
+
+void DetectorSetup::set_trigger_multiplicity(std::size_t trig_mult, bool exclusive)
+{
+    m_trigger_function = [trig_mult, exclusive](const std::valarray<bool>& hitvector) {
+        std::size_t coinc_count {
+            std::accumulate(std::begin(hitvector), std::end(hitvector), 0UL,
+                [](std::size_t sum, bool a) {
+                    return ((a) ? sum + 1UL : sum);
+                })
+        };
+        if (exclusive) {
+            return (coinc_count == trig_mult);
+        }
+        return (coinc_count >= trig_mult);
+    };
 }

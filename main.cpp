@@ -214,6 +214,11 @@ auto main() -> int
     theta_scan(setup, gen, nr_events, 0., theta_max, nr_bins, &histos);
 */
 
+    if (min_coincidence_count < 0)
+        setup.set_trigger_function(and_trigger);
+    else
+        setup.set_trigger_multiplicity(min_coincidence_count);
+
     // run a full simulation and append the resulting histograms
     // to the already existing histogram vector
     // this will simulate <nr-events> MC-generated tracks and return the total acceptance

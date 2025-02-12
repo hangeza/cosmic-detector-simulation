@@ -161,16 +161,20 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
         LineSegment refdet_path { setup.ref_volume().intersection(line) };
 
         mc_events++;
+        std::valarray<bool> hitvector(false, setup.detectors().size());
+        std::size_t det_index { 0 };
         for (auto detector { setup.detectors().cbegin() };
              detector != setup.detectors().end();
-             ++detector) {
+             ++detector, ++det_index) {
             LineSegment det_path { detector->intersection(line) };
             if (det_path.length() > DEFAULT_EPSILON) {
                 coincidence++;
+                hitvector[det_index] = true;
             }
         }
 
-        if (coincidence >= coinc_level) {
+        bool trigger { setup.isTrigger(hitvector) };
+        if (trigger) {
             detector_events++;
         }
     }
@@ -323,6 +327,7 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
         det_index = 0;
         bool any_detector_hit { false };
         unsigned int coincidence { 0 };
+        std::valarray<bool> hitvector(false, setup.detectors().size());
         for (auto detector { setup.detectors().cbegin() };
              detector != setup.detectors().end();
              ++detector, ++det_index) {
@@ -330,13 +335,15 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
             if (det_path.length() > 0.) {
                 pathlength_values[det_index] = det_path.length();
                 coincidence++;
+                hitvector[det_index] = true;
                 if (!any_detector_hit) {
                     any_detector_hit = true;
                     detector_events++;
                 }
             }
         }
-        if (coincidence >= coinc_level) {
+        bool trigger { setup.isTrigger(hitvector) };
+        if (trigger) {
             theta_acc_hist.fill(theta);
             phi_acc_hist.fill(phi);
             for (auto [detindex, pathlength_value] : pathlength_values) {

@@ -4,6 +4,9 @@
 
 #include "geometry_types.h"
 
+bool or_trigger(const std::valarray<bool>& hitvector);
+bool and_trigger(const std::valarray<bool>& hitvector);
+
 /** @brief DetectorSetup - class for managing geometric objects of type ExtrudedObject
  * This class stores a list of ExtrudedObject detector objects for convenience.
  * An arbitrary number of detector objects with individual alignments can be supplied to the
@@ -23,11 +26,8 @@
 */
 class DetectorSetup {
 public:
-    struct TriggerClass {
-        unsigned number { 1u };
-        bool invert { false };
-        std::function<bool(bool, bool)> logic_function { std::logical_or<bool> {} };
-    };
+    typedef std::vector<ExtrudedObject>::iterator iterator;
+    typedef std::vector<ExtrudedObject>::const_iterator const_iterator;
     DetectorSetup() = default;
     DetectorSetup(const DetectorSetup& other);
     DetectorSetup(DetectorSetup&& other);
@@ -35,7 +35,7 @@ public:
 
     auto detectors() -> std::vector<ExtrudedObject>& { return m_detectors; }
     auto detectors() const -> const std::vector<ExtrudedObject>& { return m_detectors; }
-    void add_detector(const ExtrudedObject& det);
+    const auto add_detector(const ExtrudedObject& det) -> std::vector<ExtrudedObject>::const_iterator;
     void set_ref_volume(const ExtrudedObject& ref_volume) { m_ref_volume = ref_volume; }
     void autogenerate_ref_volume();
     auto ref_volume() const -> const ExtrudedObject& { return m_ref_volume; }
@@ -46,9 +46,22 @@ public:
 
     auto intersection(const Line& path) const -> std::vector<LineSegment>;
 
+    void set_trigger_function(std::function<bool(const std::valarray<bool>&)> a_func)
+    {
+        m_trigger_function = a_func;
+    }
+
+    void set_trigger_multiplicity(std::size_t trig_mult, bool exclusive = false);
+
+    bool isTrigger(const std::valarray<bool>& hitvector) const
+    {
+        return (m_trigger_function)?m_trigger_function(hitvector):false;
+    }
+
 private:
     auto get_largest_bounding_box() const -> std::pair<Point, Point>;
     std::vector<ExtrudedObject> m_detectors {};
     ExtrudedObject m_ref_volume {};
     std::string m_name {};
+    std::function<bool(const std::valarray<bool>&)> m_trigger_function { and_trigger };
 };
