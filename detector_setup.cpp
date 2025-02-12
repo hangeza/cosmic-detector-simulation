@@ -2,16 +2,31 @@
 #include "algebra_types.h"
 #include "algebra_utils.h"
 #include "geometry_types.h"
+#include "utilities.h"
 
+#include <functional>
 #include <iostream>
+#include <numeric>
+
+bool or_trigger(const std::valarray<bool>& hitvector)
+{
+    return std::any_of(std::begin(hitvector), std::end(hitvector), std::identity<bool>());
+}
+
+bool and_trigger(const std::valarray<bool>& hitvector)
+{
+    return std::all_of(std::begin(hitvector), std::end(hitvector), std::identity<bool>());
+}
 
 DetectorSetup::DetectorSetup(const std::vector<ExtrudedObject>& detectorlist, const ExtrudedObject& ref_volume)
     : m_detectors(detectorlist)
 {
     if (ref_volume == ExtrudedObject::invalid_volume()) {
-        // invalid ref volume...setting to 2*bounding box
+        // invalid/uninitialized ref volume...setting to the largest possible bounding box
+        // which contains the detector setup under all possible rotations
         auto bounds { this->get_largest_bounding_box() };
-        //auto bounds { this->bounding_box() };
+        // extend the ref volume by another 10% to prevent having a detector boundary
+        // exactly at the edge of the ref volume
         bounds.first *= 1.1;
         bounds.second *= 1.1;
         m_ref_volume = std::move(ExtrudedObject(bounds));
@@ -143,9 +158,6 @@ void DetectorSetup::rotate(const Vector& rot_axis, double rot_angle)
     if (inEpsilon(rot_angle))
         return;
     for (auto& detector : m_detectors) {
-        //Point pos { detector.position() };
-        //pos = ::rotate(pos, rot_axis, rot_angle);
-        //detector.set_position(pos);
         detector.add_rotation(rot_axis, rot_angle);
     }
 }

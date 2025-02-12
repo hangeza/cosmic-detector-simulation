@@ -241,7 +241,7 @@ auto main() -> int
 
     // quit here in case an angular detector sweep is not required
     exit(0);
-    
+
     // alternatively: run a sweep over angular range of detector orientation
     // return a list of acceptance vs angle including statistical errors
     auto acceptance_dataseries { cosmic_simulation_detector_sweep(setup, gen, nr_events, detector_rotation_axis, toRad(-90.), toRad(90.), 181, min_coincidence_count) };

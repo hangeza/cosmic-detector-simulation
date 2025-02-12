@@ -8,9 +8,18 @@
  * This class stores a list of ExtrudedObject detector objects for convenience.
  * An arbitrary number of detector objects with individual alignments can be supplied to the
  * constructor. Additionaly, a global rotation of the whole setup can be set.
- * @note The first detector of the vector which is supplied to the constructor is set as
- * reference detector. The assignment of the ref detector can be changed with the
- * DetectorSetup::ref_detector() method
+ * @note A reference volume can be specified through the constructor. If ommited, a ref volume
+ * larger than the largest possible boundary box (considering all possible detector rotations)
+ * is automatically constructed.
+ * @note A trigger function can be explicitely set which handles the way how the whole
+ * set of detectors responds with a boolean output (coincidence) when hit by a track.
+ * If not explicitely set, the trigger function is by default constructed with a logical "AND"
+ * btw. all detectors, i.e. a coincidence signal is only asserted when all detectors
+ * are intersected by a track. Alternatively, an AND trigger pattern can be set through the
+ * set_trigger_multiplicity method, which takes as an argument the number of detectors
+ * which must be hit by a track. The second argument specifies, whether the coincidence is
+ * exclusive, i.e. that only the given number of detectors must respond or inclusive, i.e.
+ * that at least the given number of detectors must be hit.
 */
 class DetectorSetup {
 public:
