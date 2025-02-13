@@ -122,20 +122,33 @@ void theta_scan(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_ev
         histos->push_back(acc_hist);
 }
 
-double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta, int coinc_level)
+double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta, std::vector<Histogram>* histos)
 {
     if (setup.ref_volume() == ExtrudedObject::invalid_volume()) {
         std::cerr << "no reference volume defined in DetectorSetup!\n";
         return std::numeric_limits<double>::quiet_NaN();
     }
 
-    if (coinc_level < 0)
-        coinc_level = setup.detectors().size();
-
     auto bounds { setup.ref_volume().bounding_box() };
     Point dimensions { bounds.second - bounds.first };
-    std::cout << "ref volume bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
-    std::cout << "ref volume dimensions=" << dimensions << "\n";
+    //std::cout << "ref volume bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
+    //std::cout << "ref volume dimensions=" << dimensions << "\n";
+
+    const std::size_t n_detectors { setup.detectors().size() };
+    std::map<std::size_t, double> pathlength_values {};
+    std::vector<Histogram> pathlength_histos {};
+    std::vector<Histogram> eloss_histos {};
+    std::size_t det_index { 0 };
+    for (auto det : setup.detectors()) {
+        auto bounds { det.bounding_box() };
+        double max_pl = norm(bounds.second - bounds.first);
+        //std::cout << "det " << std::to_string(det_index+1) << ": max dim=" << max_pl << std::endl;
+        Histogram pl_hist("pathlength_fixtheta_det" + std::to_string(det_index + 1), 500U, 0., max_pl * 1.0);
+        Histogram eloss_hist("eloss_fixtheta_det" + std::to_string(det_index + 1), 500U, 0., MEAN_ELOSS * max_pl * 2.0);
+        pathlength_histos.emplace_back(std::move(pl_hist));
+        eloss_histos.emplace_back(std::move(eloss_hist));
+        det_index++;
+    }
 
     std::uniform_real_distribution<> distro_x {
         bounds.first[0],
@@ -151,11 +164,13 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
         bounds.second[2]
     };
     std::uniform_real_distribution<> distro_phi(-pi(), pi());
+    SampledDistribution distro_eloss(moyal_cdf, 0., 20., { MEAN_ELOSS, ELOSS_WIDTH });
 
     std::size_t mc_events { 0 };
     std::size_t detector_events { 0 };
     for (std::size_t n = 0; n < nr_events; ++n) {
         const double phi { (inEpsilon(theta)) ? 0. : distro_phi(gen) };
+        double eloss { distro_eloss(gen) };
         Line line { Line::generate({ distro_x(gen), distro_y(gen), distro_z(gen) }, theta, phi) };
         unsigned int coincidence { 0 };
         LineSegment refdet_path { setup.ref_volume().intersection(line) };
@@ -168,6 +183,7 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
              ++detector, ++det_index) {
             LineSegment det_path { detector->intersection(line) };
             if (det_path.length() > DEFAULT_EPSILON) {
+                pathlength_values[det_index] = det_path.length();
                 coincidence++;
                 hitvector[det_index] = true;
             }
@@ -175,9 +191,24 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
 
         bool trigger { setup.isTrigger(hitvector) };
         if (trigger) {
+            for (auto [detindex, pathlength_value] : pathlength_values) {
+                pathlength_histos.at(detindex).fill(pathlength_value);
+                eloss_histos.at(detindex).fill(pathlength_value * eloss);
+                //std::cout << detindex << " " << std::setw(2) << toDeg(theta) << " " << toDeg(phi) << " " << pathlength_value << "\n";
+            }
             detector_events++;
         }
     }
+    
+    if (histos != nullptr) {
+        if (!pathlength_histos.empty()) {
+            histos->insert(histos->end(), pathlength_histos.begin(), pathlength_histos.end());
+        }
+        if (!eloss_histos.empty()) {
+            histos->insert(histos->end(), eloss_histos.begin(), eloss_histos.end());
+        }
+    }
+
     double acceptance { static_cast<double>(detector_events) / mc_events };
     std::cout << "events simulated:" << mc_events << "  events detected:" << detector_events << " acceptance:" << static_cast<double>(detector_events) / mc_events << " acceptance error: " << std::sqrt(detector_events) / mc_events << "\n";
 
@@ -254,7 +285,7 @@ std::array<std::array<double, THETA_BINS>, PHI_BINS> theta_phi_scan(const Detect
     return phi_theta_acceptance;
 }
 
-DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, std::vector<Histogram>* histos, std::size_t nr_bins, double theta_max, int coinc_level)
+DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, std::vector<Histogram>* histos, std::size_t nr_bins, double theta_max)
 {
     DataItem<double> data_item {};
 
@@ -278,9 +309,6 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
         eloss_histos.emplace_back(std::move(eloss_hist));
         det_index++;
     }
-
-    if (coinc_level < 0)
-        coinc_level = setup.detectors().size();
 
     Histogram theta_hist("theta_distribution", nr_bins, 0., theta_max);
     Histogram phi_hist("phi_distribution", nr_bins, -pi(), pi());
@@ -370,7 +398,7 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
     return { static_cast<double>(coinc_events) / nr_events, std::sqrt(coinc_events) / nr_events };
 }
 
-MeasurementVector<double, double> cosmic_simulation_detector_sweep(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, const Vector& detector_rotation_axis, double detector_min_angle, double detector_max_angle, std::size_t nr_angles, int coinc_level)
+MeasurementVector<double, double> cosmic_simulation_detector_sweep(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, const Vector& detector_rotation_axis, double detector_min_angle, double detector_max_angle, std::size_t nr_angles)
 {
     MeasurementVector<double, double> data_series {};
     auto rotated_setup { setup };
@@ -380,7 +408,7 @@ MeasurementVector<double, double> cosmic_simulation_detector_sweep(const Detecto
     rotated_setup.rotate(detector_rotation_axis, detector_min_angle);
     for (std::size_t i = 0; i < nr_angles; ++i) {
         std::cout << "current angle=" << toDeg(angle) << "deg\n";
-        DataItem<double> item { cosmic_simulation(rotated_setup, gen, nr_events, nullptr, 90, toRad(90.), coinc_level) };
+        DataItem<double> item { cosmic_simulation(rotated_setup, gen, nr_events, nullptr, 90, toRad(90.)) };
         data_series.emplace_back(DataItem<double>({ angle, dtheta }), std::move(item));
         angle += dtheta;
         rotated_setup.rotate(detector_rotation_axis, dtheta);

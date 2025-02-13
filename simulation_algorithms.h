@@ -35,13 +35,14 @@ void theta_scan(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_ev
  * @param gen random number generator (Mersenne-Twister engine of type std::mt19937)
  * @param nr_events The number of tracks to be generated.
  * @param theta the theta angle of the generated tracks (default=0)
+ * @param histos A pointer to std::vector of Histogram objects containing the resulting distributions for path_length and eloss distributions
  * @return the absolute effective area in m^2
  * @note The generated tracks are distributed over an area at least 5 times larger
  * than the boundaries of the ref detector. The number of tracks intersecting all detectors
  * to the number of tracks generated is taken as a measure of the area provided that
  * the scale of the detector dimensions is in millimeters.
 */
-double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta = 0., int coinc_level = -1);
+double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, double theta = 0., std::vector<Histogram>* histos = nullptr);
 
 /** @brief theta_phi_scan
  * This function calculates the differential angular acceptance in dependence of phi and theta
@@ -72,7 +73,7 @@ std::array<std::array<double, THETA_BINS>, PHI_BINS> theta_phi_scan(const Detect
  * @return A DataItem<double> object containing the total acceptance (ratio of detected hits to generated tracks) and it's statistical error.
  * @note In case of an error, the histogram vector is not filled and the returned DataItem object is default initialized.
 */
-DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, std::vector<Histogram>* histos = nullptr, std::size_t nr_bins = 90, double theta_max = pi() / 2, int coinc_level = -1);
+DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen, std::size_t nr_events, std::vector<Histogram>* histos = nullptr, std::size_t nr_bins = 90, double theta_max = pi() / 2);
 
 /** @brief cosmic_simulation_detector_sweep
  * This function does a full Monte-Carlo simulated evaluation of particle hits for a given detector setup for a scan over a given range of detector rotations around a given axis. Tracks are distributed as follows:
@@ -85,7 +86,6 @@ DataItem<double> cosmic_simulation(const DetectorSetup& setup, std::mt19937& gen
  * @param detector_min_angle the smallest rotation angle
  * @param detector_min_angle the largest rotation angle
  * @param nr_angles the number of steps in which the detector will be rotated between detector_min_angle and detector_max_angle
- * @param coinc_level the number of detectors which have to be crossed by a track in order to assert a coincidence event
  * @return A MeasurementVector<double> (aka std::vector<std::pair<DataItem<double>, DataItem<double>>) object containing the total acceptance (ratio of detected hits to generated tracks) and it's statistical error.
  * @note In case of an error, the histogram vector is not filled and the returned MeasurementVector object is default initialized and empty.
 */

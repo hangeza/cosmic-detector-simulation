@@ -44,7 +44,7 @@ auto main() -> int
     constexpr double detector_rotation_angle { toRad(0.) };
 
     constexpr std::size_t nr_bins { static_cast<int>(theta_max / theta_step) + 1 };
-    std::cout << "nr of bins: " << nr_bins << "\n";
+    if (g_verbosity > 3) std::cout << "nr of bins: " << nr_bins << "\n";
 
     // define the coincidence level, i.e. the number of detectors in a setup which have to provide a signal for one event
     // -1 for auto, i.e. coinc level is set to the number of detectors
@@ -133,41 +133,44 @@ auto main() -> int
     ExtrudedObject round_detector1 { { 0., 0., 0. }, 50., 10. };
     ExtrudedObject round_detector2 { { 0., 0., 100. }, 50., 10. };
 
-    ExtrudedObject fiber { { 0., 0., -250. }, 0.5, 500., 16 };
+    ExtrudedObject fiber { { 0., 0., -5. }, 0.5, 10., 128 };
     fiber.add_rotation(R3::Base::Y, toRad(90.));
 
     // Now create the detector setup consisting of one or more ExtrudedObject instances as detectors
     // and a reference volume, which countains all detectors.
     // In case the ref volume is not specified, the DetectorSetup instance will automatically infer one
-    // from the bounding box containing all detectors (+100% margin in each dimension)
-    DetectorSetup setup { { detector1, detector2 } };
+    // from the bounding box containing all detectors (+10% margin in each dimension)
+    DetectorSetup setup { { fiber } };
 
     if (min_coincidence_count < 0)
         setup.set_trigger_function(and_trigger);
     else
         setup.set_trigger_multiplicity(min_coincidence_count);
 
+
+/*
     // alternative example:
     // construct a detector setup with several detectors which are individually aligned
     // the setup describes a set of scintillating fibers which are rotated and shifted to
     // align along x and y axes
-    /*
+    
     constexpr struct fibertracker_param_struct {
         std::size_t nr_fibers_per_layer { 16 };
         double fiber_diameter { 1.05 };
         double fiber_radius { fiber_diameter/2 };
-        double fiber_length { 100. };
-        double sublayer_distance { 2. };
-        double layer_distance { 50. };
+        double fiber_length { 5. };
+        double fiber_gap { 0.1 };
+        double sublayer_distance { 1. };
+        double layer_distance { 25. };
         
     } fiberparams;
     DetectorSetup setup { {} };
     //setup.add_detector(trigger_detector);
     for (std::size_t i = 0; i < fiberparams.nr_fibers_per_layer; ++i) {
-        ExtrudedObject det_l1x { { 0., -8. + static_cast<double>(i) * 1. + 0.1, -fiberparams.fiber_length/2 }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
-        ExtrudedObject det_l1y { { -fiberparams.sublayer_distance, -8.5 + static_cast<double>(i) * 1. + 0.1, -fiberparams.fiber_length/2 }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
-        ExtrudedObject det_l2x { { -fiberparams.layer_distance, -8. + static_cast<double>(i) * 1. + 0.1, -fiberparams.fiber_length/2 }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
-        ExtrudedObject det_l2y { { -(fiberparams.layer_distance + fiberparams.sublayer_distance), -8.5 + static_cast<double>(i) * 1. + 0.1, -fiberparams.fiber_length/2 }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
+        ExtrudedObject det_l1x { { 0., -0.5*fiberparams.nr_fibers_per_layer + static_cast<double>(i) * (fiberparams.fiber_diameter + fiberparams.fiber_gap), -fiberparams.fiber_length/2. }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
+        ExtrudedObject det_l1y { { -fiberparams.sublayer_distance, -0.5*fiberparams.nr_fibers_per_layer-0.5 + static_cast<double>(i) * (fiberparams.fiber_diameter + fiberparams.fiber_gap), -fiberparams.fiber_length/2. }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
+        ExtrudedObject det_l2x { { -fiberparams.layer_distance, -0.5*fiberparams.nr_fibers_per_layer + static_cast<double>(i) * (fiberparams.fiber_diameter + fiberparams.fiber_gap), -fiberparams.fiber_length/2. }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
+        ExtrudedObject det_l2y { { -(fiberparams.layer_distance + fiberparams.sublayer_distance), -0.5*fiberparams.nr_fibers_per_layer-0.5 + static_cast<double>(i) * (fiberparams.fiber_diameter + fiberparams.fiber_gap), -fiberparams.fiber_length/2. }, fiberparams.fiber_radius, fiberparams.fiber_length, 16 };
         det_l1x.add_rotation(R3::Base::Y, toRad(90.));
         det_l1y.add_rotation(R3::Base::Y, toRad(90.));
         det_l1y.add_rotation(R3::Base::Z, toRad(90.));
@@ -185,33 +188,37 @@ auto main() -> int
         bool first_ylayer_or { or_trigger(hitvector[std::slice(1,fiberparams.nr_fibers_per_layer,4)]) };
         bool second_xlayer_or { or_trigger(hitvector[std::slice(2,fiberparams.nr_fibers_per_layer,4)]) };
         bool second_ylayer_or { or_trigger(hitvector[std::slice(3,fiberparams.nr_fibers_per_layer,4)]) };
-        //return true;
         bool all_layer_coinc { first_xlayer_or && first_ylayer_or && second_xlayer_or && second_ylayer_or }; 
         //if (all_layer_coinc) std::cout<<"trigger lambda: t1="<<first_xlayer_or<<std::endl;
         return all_layer_coinc;
     };
     setup.set_trigger_function(trigger_fn);
-    
-*/
+*/    
+
 
     // add a rotation to the entire system
     // the pivot point is the origin in the detector coordinate system
     // all detectors are rotated at the pivot about the given axis and a given angle
     setup.rotate(detector_rotation_axis, detector_rotation_angle);
 
-    for (const auto& detector : setup.detectors()) {
-        auto bounds { detector.bounding_box() };
-        Point dimensions { bounds.second - bounds.first };
-        std::cout << "** Detector **" << std::endl;
-        std::cout << "detector bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
-        std::cout << "detector dimensions=" << dimensions << "\n";
-        std::cout << "detector base area=" << detector.getBaseArea() << "\n";
-        std::cout << "detector volume=" << detector.getVolume() << "\n";
+    if (g_verbosity > 1) {
+        for (const auto& detector : setup.detectors()) {
+            auto bounds { detector.bounding_box() };
+            Point dimensions { bounds.second - bounds.first };
+            std::cout << "** Detector **" << std::endl;
+            std::cout << "detector bounds: min=" << bounds.first << " max=" << bounds.second << "\n";
+            std::cout << "detector dimensions=" << dimensions << "\n";
+            std::cout << "detector base area=" << detector.getBaseArea() << "\n";
+            std::cout << "detector volume=" << detector.getVolume() << "\n";
+        }
     }
+
+    // initialize the histogram vector
+    std::vector<Histogram> histos {};
 
     // simulate the effective area (geometric aperture) at theta=0 of the detector system
     // this quantity may be used later to infer the expected detector count rate
-    [[maybe_unused]] const double effective_area_sqm { simulate_geometric_aperture(setup, gen, nr_events * 10, 0, min_coincidence_count) };
+    [[maybe_unused]] const double effective_area_sqm { simulate_geometric_aperture(setup, gen, nr_events, 0, &histos) };
 
     // uncomment the following block to calculate the double differential acceptance
     // as function of phi and theta
@@ -219,25 +226,22 @@ auto main() -> int
     [[maybe_unused]] const auto acceptance_phi_theta = theta_phi_scan<361, 46>(setup, gen, nr_events, 0., theta_max, -pi(), pi());
 */
 
-    // initialize the histogram vector
-    std::vector<Histogram> histos {};
-
     // run a scan over theta angle (uniformly distributed)
     // to record the detector acceptance, if required
     /*
     theta_scan(setup, gen, nr_events, 0., theta_max, nr_bins, &histos);
 */
-
+/*
     if (min_coincidence_count < 0)
         setup.set_trigger_function(and_trigger);
     else
         setup.set_trigger_multiplicity(min_coincidence_count);
-
+*/
     // run a full simulation and append the resulting histograms
     // to the already existing histogram vector
     // this will simulate <nr-events> MC-generated tracks and return the total acceptance
     // i.e. the ratio of detected tracks to total generated tracks
-    DataItem<double> detector_acceptance { cosmic_simulation(setup, gen, nr_events, &histos, nr_bins, theta_max, min_coincidence_count) };
+    DataItem<double> detector_acceptance { cosmic_simulation(setup, gen, nr_events, &histos, nr_bins, theta_max) };
     if (detector_acceptance.value != 0.) {
         DataItem<double> countrate_item { detector_acceptance };
         // calculate the count rate conversion based on given reference flux value
@@ -263,7 +267,7 @@ auto main() -> int
 
     // alternatively: run a sweep over angular range of detector orientation
     // return a list of acceptance vs angle including statistical errors
-    auto acceptance_dataseries { cosmic_simulation_detector_sweep(setup, gen, nr_events, detector_rotation_axis, toRad(-90.), toRad(90.), 181, min_coincidence_count) };
+    auto acceptance_dataseries { cosmic_simulation_detector_sweep(setup, gen, nr_events, detector_rotation_axis, toRad(-90.), toRad(90.), 181) };
 
     // define a second list which will hold count rate values calculated from acceptance
     MeasurementVector<double, double> countrate_vs_angle_dataseries {};
