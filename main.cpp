@@ -155,10 +155,10 @@ auto main() -> int
     // align along x and y axes
     
     constexpr struct fibertracker_param_struct {
-        std::size_t nr_fibers_per_layer { 16 };
-        double fiber_diameter { 1.05 };
+        std::size_t nr_fibers_per_layer { 4 };
+        double fiber_diameter { 1.0 };
         double fiber_radius { fiber_diameter/2 };
-        double fiber_length { 5. };
+        double fiber_length { 10. };
         double fiber_gap { 0.1 };
         double sublayer_distance { 1. };
         double layer_distance { 25. };
