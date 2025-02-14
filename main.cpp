@@ -44,7 +44,8 @@ auto main() -> int
     constexpr double detector_rotation_angle { toRad(0.) };
 
     constexpr std::size_t nr_bins { static_cast<int>(theta_max / theta_step) + 1 };
-    if (g_verbosity > 3) std::cout << "nr of bins: " << nr_bins << "\n";
+    if (g_verbosity > 3)
+        std::cout << "nr of bins: " << nr_bins << "\n";
 
     // define the coincidence level, i.e. the number of detectors in a setup which have to provide a signal for one event
     // -1 for auto, i.e. coinc level is set to the number of detectors
@@ -148,8 +149,7 @@ auto main() -> int
     else
         setup.set_trigger_multiplicity(min_coincidence_count, exclusive_trigger);
 
-
-/*
+    /*
     // alternative example:
     // construct a detector setup with several detectors which are individually aligned
     // the setup describes a set of scintillating fibers which are rotated and shifted to
@@ -194,7 +194,7 @@ auto main() -> int
         return all_layer_coinc;
     };
     setup.set_trigger_function(trigger_fn);
-*/  
+*/
 
     // add a rotation to the entire system
     // the pivot point is the origin in the detector coordinate system

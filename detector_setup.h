@@ -47,11 +47,11 @@ public:
 
     auto intersection(const Line& path) const -> std::vector<LineSegment>;
 
-    trigger_function_t get_trigger_function() const 
+    trigger_function_t get_trigger_function() const
     {
         return m_trigger_function;
     }
-    
+
     void set_trigger_function(std::function<bool(const std::valarray<bool>&)> a_func)
     {
         m_trigger_function = a_func;
@@ -61,7 +61,7 @@ public:
 
     bool isTrigger(const std::valarray<bool>& hitvector) const
     {
-        return (m_trigger_function)?m_trigger_function(hitvector):false;
+        return (m_trigger_function) ? m_trigger_function(hitvector) : false;
     }
 
 private:

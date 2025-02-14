@@ -199,7 +199,7 @@ double simulate_geometric_aperture(const DetectorSetup& setup, std::mt19937& gen
             detector_events++;
         }
     }
-    
+
     if (histos != nullptr) {
         if (!pathlength_histos.empty()) {
             histos->insert(histos->end(), pathlength_histos.begin(), pathlength_histos.end());
