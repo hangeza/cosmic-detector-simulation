@@ -135,13 +135,14 @@ auto main() -> int
     ExtrudedObject round_detector1 { { 0., 0., 0. }, 50., 10. };
     ExtrudedObject round_detector2 { { 0., 0., 100. }, 50., 10. };
 
-    ExtrudedObject fiber { { 0., 0., -5. }, 0.5, 10., 128 };
+    ExtrudedObject fiber { { 0., 0., -5. }, 0.5, 10., 64 };
     fiber.add_rotation(R3::Base::Y, toRad(90.));
 
     // Now create the detector setup consisting of one or more ExtrudedObject instances as detectors
     // and a reference volume, which countains all detectors.
     // In case the ref volume is not specified, the DetectorSetup instance will automatically infer one
     // from the bounding box containing all detectors (+10% margin in each dimension)
+
     DetectorSetup setup { { fiber } };
 
     if (min_coincidence_count < 0)
