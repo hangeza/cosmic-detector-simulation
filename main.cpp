@@ -49,6 +49,7 @@ auto main() -> int
     // define the coincidence level, i.e. the number of detectors in a setup which have to provide a signal for one event
     // -1 for auto, i.e. coinc level is set to the number of detectors
     constexpr int min_coincidence_count { -1 };
+    constexpr bool exclusive_trigger { false };
 
     // vector of 2d polygon vertices defining the shape (in x-y-plane) of the detector.
     // note, that the points have to be in geometrical sequential order in
@@ -145,7 +146,7 @@ auto main() -> int
     if (min_coincidence_count < 0)
         setup.set_trigger_function(and_trigger);
     else
-        setup.set_trigger_multiplicity(min_coincidence_count);
+        setup.set_trigger_multiplicity(min_coincidence_count, exclusive_trigger);
 
 
 /*
@@ -193,8 +194,7 @@ auto main() -> int
         return all_layer_coinc;
     };
     setup.set_trigger_function(trigger_fn);
-*/    
-
+*/  
 
     // add a rotation to the entire system
     // the pivot point is the origin in the detector coordinate system
@@ -216,9 +216,13 @@ auto main() -> int
     // initialize the histogram vector
     std::vector<Histogram> histos {};
 
+    //DetectorSetup::trigger_function_t trigger_fun { setup.get_trigger_function() };
+    //setup.set_trigger_function(and_trigger);
+
     // simulate the effective area (geometric aperture) at theta=0 of the detector system
     // this quantity may be used later to infer the expected detector count rate
     [[maybe_unused]] const double effective_area_sqm { simulate_geometric_aperture(setup, gen, nr_events, 0, &histos) };
+    //setup.set_trigger_function(trigger_fun);
 
     // uncomment the following block to calculate the double differential acceptance
     // as function of phi and theta
@@ -231,12 +235,7 @@ auto main() -> int
     /*
     theta_scan(setup, gen, nr_events, 0., theta_max, nr_bins, &histos);
 */
-/*
-    if (min_coincidence_count < 0)
-        setup.set_trigger_function(and_trigger);
-    else
-        setup.set_trigger_multiplicity(min_coincidence_count);
-*/
+
     // run a full simulation and append the resulting histograms
     // to the already existing histogram vector
     // this will simulate <nr-events> MC-generated tracks and return the total acceptance

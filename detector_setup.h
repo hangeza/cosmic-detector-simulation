@@ -28,6 +28,7 @@ class DetectorSetup {
 public:
     typedef std::vector<ExtrudedObject>::iterator iterator;
     typedef std::vector<ExtrudedObject>::const_iterator const_iterator;
+    typedef std::function<bool(const std::valarray<bool>&)> trigger_function_t;
     DetectorSetup() = default;
     DetectorSetup(const DetectorSetup& other);
     DetectorSetup(DetectorSetup&& other);
@@ -46,6 +47,11 @@ public:
 
     auto intersection(const Line& path) const -> std::vector<LineSegment>;
 
+    trigger_function_t get_trigger_function() const 
+    {
+        return m_trigger_function;
+    }
+    
     void set_trigger_function(std::function<bool(const std::valarray<bool>&)> a_func)
     {
         m_trigger_function = a_func;
