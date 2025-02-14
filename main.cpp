@@ -43,7 +43,7 @@ auto main() -> int
     // set to 0, if setup should not be rotated
     constexpr double detector_rotation_angle { toRad(0.) };
 
-    constexpr std::size_t nr_bins { static_cast<int>(theta_max / theta_step) + 1 };
+    constexpr std::size_t nr_bins { static_cast<size_t>(theta_max / theta_step) + 1 };
     if (g_verbosity > 3)
         std::cout << "nr of bins: " << nr_bins << "\n";
 

@@ -176,7 +176,7 @@ ExtrudedObject::ExtrudedObject(const std::pair<Point, Point>& bounding_box)
     m_planes = getPlanes();
 }
 
-const auto ExtrudedObject::position() const -> Point
+auto ExtrudedObject::position() const -> const Point
 {
     return m_position;
 }

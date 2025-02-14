@@ -95,7 +95,7 @@ public:
     ExtrudedObject(const Point& position, double radius, double thickness, std::size_t nr_vertices = 32);
     ExtrudedObject(const std::pair<Point, Point>& bounding_box);
     ExtrudedObject& operator=(const ExtrudedObject& other);
-    const auto position() const -> Point;
+    auto position() const -> const Point;
     void set_position(const Point& new_pos);
     auto thickness() const -> double;
     auto contains(const Point& point) const -> bool;
